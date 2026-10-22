@@ -2,8 +2,9 @@
   "name": "online-shopping-system",
   "version": "1.0.0",
   "description": "在线购物网站课程设计",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
+    "start": "node app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -19,6 +20,7 @@
   },
   "homepage": "https://github.com/naxida0426/online-shopping-system#readme",
   "dependencies": {
+    "bootstrap": "^5.3.8",
     "ejs": "^7.0.2",
     "express": "^5.3.0"
   }

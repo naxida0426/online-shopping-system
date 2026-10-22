@@ -1,13 +1,66 @@
+<%- include('partials/header') %>
+<main id="main-content">
+  <section class="hero container-xl" aria-labelledby="hero-title">
+    <div class="hero-panel">
+      <div class="hero-copy">
+        <span class="eyebrow"><span class="small-line"></span> 用心挑选 · 日常好物</span>
+        <h1 id="hero-title">拾起日常里的<br>一点<span>小美好。</span></h1>
+        <p>生活不必很满，喜欢刚刚好。<br>从一件心动的好物开始，让平凡的日子闪闪发光。</p>
+        <a class="btn btn-brand hero-button" href="#products">发现精选好物 <svg class="icon" aria-hidden="true"><use href="/images/icons.svg#arrow"/></svg></a>
+        <div class="hero-note"><span class="note-dot"></span> 精选生活灵感，遇见你的日常所爱</div>
+      </div>
+      <div class="hero-art">
+        <img src="/images/hero.svg" alt="暖光台灯、绿植与手账本组成的温暖桌面插画" width="650" height="480" fetchpriority="high">
+        <div class="hero-art-label"><span>THE LITTLE THINGS</span><strong>好好生活，慢慢喜欢</strong></div>
+        <span class="art-caption">拾光 · 生活提案 01</span>
+      </div>
+    </div>
+  </section>
 
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-  <meta charset="UTF-8">
-  <title>拾光商城</title>
-</head>
-<body>
-  <h1>欢迎来到拾光商城</h1>
-  <p>我的第一个在线购物网站</p>
-  <button>浏览商品</button>
-</body>
-</html>
+  <section class="container-xl category-section" aria-labelledby="category-title">
+    <div class="section-heading category-heading"><div><span class="eyebrow">FIND YOUR FAVORITES</span><h2 id="category-title">每一种喜欢，都有归属</h2></div><p>按分类，发现适合你的好物</p></div>
+    <nav class="category-list" aria-label="商品分类">
+      <% categories.forEach(item => { %>
+        <a class="category-item <%= category === item.id ? 'is-active' : '' %>" href="<%= shopUrl(query, item.id) %>" <%- category === item.id ? 'aria-current="true"' : '' %>>
+          <span class="category-icon"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#<%= item.icon %>"/></svg></span><span><%= item.name %></span><svg class="icon category-arrow" aria-hidden="true"><use href="/images/icons.svg#arrow"/></svg>
+        </a>
+      <% }) %>
+    </nav>
+  </section>
+
+  <section class="container-xl products-section" id="products" aria-labelledby="products-title">
+    <div class="section-heading products-heading"><div><span class="eyebrow">CURATED FOR YOUR EVERYDAY</span><h2 id="products-title"><%= query ? '搜索结果' : '本期精选' %><span class="heading-dot"> / </span><span class="heading-secondary">把喜欢带回家</span></h2></div><span class="results-count">共 <%= products.length %> 件演示好物</span></div>
+    <div class="demo-notice"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#info"/></svg><span>首页演示：以下商品与价格仅作视觉占位，尚未接入 MySQL，暂不支持购买。</span></div>
+    <% if (query || category !== 'all') { %>
+      <div class="filter-summary"><span><% if (query) { %>关键词：<strong><%= query %></strong><% } %><% if (category !== 'all') { %><span class="ms-2">分类：<%= categories.find(item => item.id === category).name %></span><% } %></span><a href="/#products">清除筛选 <span aria-hidden="true">×</span></a></div>
+    <% } %>
+    <% if (!products.length) { %>
+      <div class="empty-state"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#search"/></svg><h3>暂时没有找到这件好物</h3><p>试试“台灯”“杯”或选择其他分类。</p><a href="/#products" class="btn btn-outline-brand">查看全部好物</a></div>
+    <% } else { %>
+      <div class="row g-4 product-grid">
+        <% products.forEach(product => { %>
+          <div class="col-12 col-sm-6 col-lg-4">
+            <article class="product-card">
+              <button class="product-visual <%= product.color %>" type="button" data-bs-toggle="modal" data-bs-target="#product-<%= product.id %>" aria-label="查看<%= product.name %>的演示预览">
+                <span class="product-tag"><%= product.tag %></span><img src="<%= product.image %>" alt="<%= product.name %>插画" width="480" height="350" loading="lazy"><span class="visual-open"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#expand"/></svg></span>
+              </button>
+              <div class="product-info"><span class="product-category"><%= product.categoryName %> <span>· 演示商品</span></span><h3><button type="button" data-bs-toggle="modal" data-bs-target="#product-<%= product.id %>"><%= product.name %></button></h3><p><%= product.description %></p><div class="product-bottom"><span class="price"><span>¥</span><%= product.price %></span><button type="button" class="preview-button" data-bs-toggle="modal" data-bs-target="#product-<%= product.id %>">查看预览 <svg class="icon" aria-hidden="true"><use href="/images/icons.svg#arrow"/></svg></button></div></div>
+            </article>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+    <p class="collection-end"><span></span> 好物不在多，合心意就好 <span></span></p>
+  </section>
+
+  <section class="container-xl mb-5" aria-label="拾光理念"><div class="values-strip">
+    <div><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#leaf"/></svg><span><strong>少一点，将就</strong><small>用心发现生活里的美</small></span></div>
+    <div><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#sun"/></svg><span><strong>多一点，喜欢</strong><small>让每件日常都有温度</small></span></div>
+    <div><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#heart"/></svg><span><strong>刚刚好，便很好</strong><small>简单生活，也值得认真</small></span></div>
+  </div></section>
+
+  <% products.forEach(product => { %>
+    <div class="modal fade" id="product-<%= product.id %>" tabindex="-1" aria-labelledby="product-title-<%= product.id %>" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><span class="eyebrow">演示商品预览</span><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button></div><div class="modal-body"><div class="modal-product-image <%= product.color %>"><img src="<%= product.image %>" alt="<%= product.name %>插画" width="480" height="350"></div><p class="product-category mt-4"><%= product.categoryName %></p><h2 class="h4" id="product-title-<%= product.id %>"><%= product.name %></h2><p class="text-secondary"><%= product.description %></p><p class="price"><span>演示价 ¥</span><%= product.price %></p><p class="modal-disclaimer">当前仅展示首页样式。商品详情、库存和购物车将在后续接入真实后端与 MySQL 后开放。</p></div><div class="modal-footer"><button type="button" class="btn btn-brand" data-bs-dismiss="modal">继续逛逛</button></div></div></div></div>
+  <% }) %>
+</main>
+<%- include('partials/footer') %>

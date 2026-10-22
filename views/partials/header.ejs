@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="拾光商城，发现日常生活里的小美好。在线购物网站课程设计首页演示。">
+  <meta name="theme-color" content="#254b3c">
+  <title><%= title %></title>
+  <link rel="icon" href="/images/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <div class="announcement"><div class="container-xl"><span>新学期，新生活。把喜欢带回日常。</span><span class="announcement-label">课程设计 · 首页演示</span></div></div>
+  <header class="site-header">
+    <nav class="navbar navbar-expand-lg container-xl" aria-label="主导航">
+      <a class="navbar-brand brand" href="/" aria-label="拾光商城首页"><span class="brand-mark"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#sun"/></svg></span><span><strong>拾光<span>商城</span></strong><small>SHIGUANG · EVERYDAY GOODS</small></span></a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#main-nav" aria-controls="main-nav" aria-expanded="false" aria-label="展开导航"><span class="navbar-toggler-icon"></span></button>
+      <div class="collapse navbar-collapse" id="main-nav">
+        <div class="navbar-nav main-nav"><a class="nav-link <%= activePage === 'home' ? 'active' : '' %>" href="/" <%- activePage === 'home' ? 'aria-current="page"' : '' %>>首页</a><a class="nav-link" href="/#products">发现好物</a></div>
+        <form class="search-form" action="/#products" method="get" role="search"><label class="visually-hidden" for="site-search">搜索演示商品</label><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#search"/></svg><input id="site-search" name="q" type="search" maxlength="100" placeholder="搜索你的心动好物" value="<%= query %>"><% if (typeof category !== 'undefined' && category !== 'all') { %><input type="hidden" name="category" value="<%= category %>"><% } %><button type="submit" aria-label="搜索">搜索</button></form>
+        <div class="header-actions"><a href="/login" class="account-link <%= activePage === 'login' ? 'active' : '' %>"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#user"/></svg>登录</a><span class="action-divider"></span><a href="/register" class="register-link">注册</a><a href="/cart" class="cart-link" aria-label="购物车（功能待开放）"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#bag"/></svg><span>购物车</span></a></div>
+      </div>
+    </nav>
+  </header>
