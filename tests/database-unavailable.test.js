@@ -18,6 +18,9 @@ test("未配置数据库时返回 503，保留静态资源和说明页，绝不�
     assert.equal((await health.json()).status, "unavailable");
     assert.equal((await fetch(`${base}/css/style.css`)).status, 200);
     assert.equal((await fetch(`${base}/login`)).status, 200);
+    assert.equal((await fetch(`${base}/products`)).status, 503);
+    assert.equal((await fetch(`${base}/products/1`)).status, 503);
+    assert.equal((await fetch(`${base}/products/not-an-id`)).status, 404);
   } finally {
     server.closeAllConnections();
     await new Promise(resolve => server.close(resolve));

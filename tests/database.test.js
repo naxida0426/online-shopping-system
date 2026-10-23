@@ -100,6 +100,9 @@ test("真实 MySQL：初始化、约束、参数化查询、HTTP 与跨进程持
       assert.ok(!body.includes("<script>alert(1)</script>"));
       assert.equal((await fetch(`${base}/not-found`)).status, 404);
     });
+    await t.test("第 3 天：列表、详情、分页与商品可见性", async subtest => {
+      await require("./catalog-integration")(subtest, { pool, base: `http://127.0.0.1:${server.address().port}` });
+    });
   } finally {
     if (original) await getPool().execute("UPDATE products SET price = ?, stock = ?, status = ? WHERE sku = ?", [original.price, original.stock, original.status, "DEMO-LAMP"]);
     if (server) { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }

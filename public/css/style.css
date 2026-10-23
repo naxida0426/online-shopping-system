@@ -1322,6 +1322,321 @@ button,input {
   }
 }
 
+/* 商品列表、分页与独立详情页 */
+.catalog-page,
+.detail-page {
+  padding-top: 25px;
+  padding-bottom: 35px;
+  min-height: 65vh;
+}
+.shop-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  font-size: 11px;
+  color: #7c8775;
+  overflow-wrap: anywhere;
+}
+.shop-breadcrumb > span[aria-hidden] {
+  color: #c0c7b7;
+}
+.shop-breadcrumb a:hover,
+.detail-back:hover,
+.product-info h3 a:hover {
+  color: var(--accent);
+}
+.catalog-intro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 30px;
+  padding-top: 32px;
+}
+.catalog-intro h1 {
+  font-size: 32px;
+  letter-spacing: 2px;
+  margin: 12px 0;
+}
+.catalog-intro p {
+  color: #7c8775;
+  font-size: 12px;
+  margin: 0;
+}
+.catalog-search {
+  display: flex;
+  border: 1px solid #dbe0d2;
+  border-radius: 7px;
+  background: #fff;
+  padding: 5px;
+  width: 390px;
+  max-width: 100%;
+}
+.catalog-search:focus-within {
+  border-color: #879d7c;
+}
+.catalog-search input {
+  flex: 1;
+  width: 0;
+  min-width: 0;
+  border: 0;
+  background: none;
+  padding: 9px 12px;
+  outline: none;
+  font-size: 12px;
+}
+.catalog-search .btn {
+  gap: 7px;
+  padding: 9px 16px;
+  flex-shrink: 0;
+}
+.catalog-page > .category-list {
+  margin-top: 32px;
+}
+.catalog-results {
+  padding-top: 35px;
+}
+.product-description-short {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow-wrap: anywhere;
+}
+.product-info h3,
+.detail-copy h1 {
+  overflow-wrap: anywhere;
+}
+.catalog-hint {
+  font-size: 12px;
+  color: #8c6c48;
+  background: #f1eee3;
+  border-radius: 5px;
+  padding: 10px 14px;
+  margin-top: 15px;
+}
+.catalog-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border-top: 1px solid var(--line);
+  margin-top: 35px;
+  padding-top: 23px;
+}
+.catalog-pagination p {
+  font-size: 11px;
+  color: #7e8975;
+  margin: 0;
+}
+.catalog-pagination .pagination {
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.catalog-pagination .page-link {
+  color: var(--green);
+  border: 1px solid #dfe4d6;
+  background: #fdfdf9;
+  padding: 7px 11px;
+  font-size: 12px;
+  border-radius: 4px;
+}
+.catalog-pagination .page-link:focus {
+  box-shadow: 0 0 0 3px #254b3c20;
+}
+.catalog-pagination .active > .page-link {
+  color: #fff;
+  background: var(--green);
+  border-color: var(--green);
+}
+.catalog-pagination .disabled > .page-link {
+  color: #a3ac99;
+  background: #f2f3ec;
+}
+.detail-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #79866f;
+  margin-top: 26px;
+  margin-bottom: 25px;
+}
+.detail-back .icon {
+  width: 17px;
+  transform: rotate(180deg);
+}
+.detail-art {
+  position: relative;
+  aspect-ratio: 1.05;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.detail-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.detail-art .product-tag {
+  font-size: 11px;
+  left: 20px;
+  top: 20px;
+}
+.detail-image-note {
+  color: #858e7b;
+  font-size: 11px;
+  margin: 13px 0 0;
+  text-align: center;
+}
+.detail-copy {
+  padding-top: 14px;
+}
+.detail-copy h1 {
+  font-size: 32px;
+  letter-spacing: 1px;
+  margin: 15px 0 17px;
+  line-height: 1.45;
+}
+.detail-lead {
+  font-size: 13px;
+  line-height: 1.9;
+  color: #7c8773;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+.detail-price {
+  background: #f0f1e8;
+  border-radius: 8px;
+  padding: 17px 20px;
+  margin: 25px 0;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.detail-price > span {
+  color: #7d8875;
+  font-size: 11px;
+}
+.detail-price strong {
+  font-family: Arial, sans-serif;
+  font-size: 34px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+.detail-price small {
+  font-size: 17px;
+  padding-right: 5px;
+}
+.detail-facts {
+  font-size: 12px;
+}
+.detail-facts > div {
+  display: flex;
+  gap: 22px;
+  margin-bottom: 15px;
+}
+.detail-facts dt {
+  color: #89917f;
+  font-weight: 400;
+  flex: 0 0 60px;
+}
+.detail-facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.stock-status {
+  font-size: 10px;
+  background: #e8eddf;
+  color: #5e784f;
+  padding: 3px 8px;
+  border-radius: 3px;
+}
+.stock-status.is-empty {
+  color: #946c49;
+  background: #f2e8d9;
+}
+.detail-stock-count {
+  margin-left: 10px;
+  color: #79866e;
+}
+.detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 28px 0 20px;
+}
+.detail-actions .btn {
+  margin: 0;
+}
+.detail-actions .btn:disabled {
+  background: #dce2d5;
+  color: #637759;
+  border-color: #dce2d5;
+  opacity: 1;
+}
+.detail-notice {
+  margin-bottom: 0;
+  align-items: flex-start;
+}
+.detail-notice .icon {
+  margin-top: 1px;
+}
+.detail-description {
+  margin-top: 42px;
+  padding: 28px 0 10px;
+  border-top: 1px solid var(--line);
+}
+.detail-description h2 {
+  font-size: 20px;
+  margin: 10px 0 17px;
+}
+.detail-description p {
+  font-size: 13px;
+  color: #7c8773;
+  line-height: 2;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+@media(max-width:767.98px) {
+  .catalog-intro {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 22px;
+    padding-top: 25px;
+  }
+  .catalog-intro h1 {
+    font-size: 27px;
+  }
+  .catalog-search {
+    width: 100%;
+  }
+  .catalog-pagination {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .detail-copy h1 {
+    font-size: 27px;
+  }
+  .detail-art {
+    aspect-ratio: 1.25;
+  }
+  .shop-breadcrumb {
+    font-size: 10px;
+  }
+}
+@media(max-width:575.98px) {
+  .products-heading {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  .catalog-pagination .page-link {
+    padding: 6px 9px;
+    font-size: 11px;
+  }
+  .catalog-results {
+    padding-top: 28px;
+  }
+}
+
 @media(prefers-reduced-motion:reduce) {
   html {
     scroll-behavior:auto;

@@ -1,0 +1,31 @@
+<% if (pagination.wasAdjusted) { %>
+  <p class="catalog-hint" role="status">页码超出范围，已显示第 <%= pagination.page %> 页。</p>
+<% } %>
+<% if (pagination.totalPages > 1) { %>
+  <div class="catalog-pagination">
+    <p>第 <%= pagination.page %> / <%= pagination.totalPages %> 页 · 共 <%= pagination.total %> 件商品</p>
+    <nav aria-label="商品分页">
+      <ul class="pagination mb-0">
+        <li class="page-item <%= pagination.page === 1 ? 'disabled' : '' %>">
+          <% if (pagination.page === 1) { %><span class="page-link">上一页</span><% } else { %>
+            <a class="page-link" rel="prev" href="<%= shopUrl(query, category, pagination.page - 1) %>">上一页</a>
+          <% } %>
+        </li>
+        <% pagination.items.forEach(number => { %>
+          <% if (number === null) { %>
+            <li class="page-item disabled"><span class="page-link" aria-label="省略页码">…</span></li>
+          <% } else if (number === pagination.page) { %>
+            <li class="page-item active"><span class="page-link" aria-current="page" aria-label="第 <%= number %> 页，当前页"><%= number %></span></li>
+          <% } else { %>
+            <li class="page-item"><a class="page-link" aria-label="第 <%= number %> 页" href="<%= shopUrl(query, category, number) %>"><%= number %></a></li>
+          <% } %>
+        <% }) %>
+        <li class="page-item <%= pagination.page === pagination.totalPages ? 'disabled' : '' %>">
+          <% if (pagination.page === pagination.totalPages) { %><span class="page-link">下一页</span><% } else { %>
+            <a class="page-link" rel="next" href="<%= shopUrl(query, category, pagination.page + 1) %>">下一页</a>
+          <% } %>
+        </li>
+      </ul>
+    </nav>
+  </div>
+<% } %>

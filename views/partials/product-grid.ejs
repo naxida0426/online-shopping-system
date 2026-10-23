@@ -1,0 +1,32 @@
+<div class="section-heading products-heading">
+  <div><span class="eyebrow">CURATED FOR YOUR EVERYDAY</span>
+    <h2 id="products-title"><%= query ? '搜索结果' : '本期精选' %><span class="heading-dot"> / </span><span class="heading-secondary">把喜欢带回家</span></h2>
+  </div>
+  <span class="results-count">共 <%= pagination.total %> 件<% if (pagination.total) { %> · 展示 <%= pagination.start %>–<%= pagination.end %> 件<% } %></span>
+</div>
+<div class="demo-notice"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#info"/></svg><span>商品信息来自 MySQL；标注“示例商品”的记录仅供课程演示，当前暂不支持购买。</span></div>
+<% if (invalidCategory) { %><p class="catalog-hint" role="status">分类不存在或已停用，已切换到全部分类。</p><% } %>
+<% if (query || category !== 'all') { %>
+  <div class="filter-summary">
+    <span><% if (query) { %>关键词：<strong><%= query %></strong><% } %>
+      <% if (category !== 'all') { %><span class="ms-2">分类：<%= categories.find(item => item.id === category).name %></span><% } %>
+    </span>
+    <a href="/products#products">清除筛选 <span aria-hidden="true">×</span></a>
+  </div>
+<% } %>
+<% if (!products.length) { %>
+  <div class="empty-state">
+    <svg class="icon" aria-hidden="true"><use href="/images/icons.svg#search"/></svg>
+    <h3><%= query ? '暂时没有找到这件好物' : '暂时没有可展示的好物' %></h3>
+    <p><%= query ? '换个关键词或选择其他分类试试。' : '可以切换分类，或稍后再来看看。' %></p>
+    <a href="/products#products" class="btn btn-outline-brand">查看全部好物</a>
+  </div>
+<% } else { %>
+  <div class="row g-4 product-grid">
+    <% products.forEach(product => { %>
+      <div class="col-12 col-sm-6 col-lg-4"><%- include('product-card', { product }) %></div>
+    <% }) %>
+  </div>
+<% } %>
+<%- include('pagination') %>
+<% products.forEach(product => { %><%- include('product-preview', { product }) %><% }) %>

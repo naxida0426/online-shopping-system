@@ -1,0 +1,21 @@
+<div class="modal fade" id="product-<%= product.id %>" tabindex="-1" aria-labelledby="product-title-<%= product.id %>" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+    <div class="modal-header">
+      <span class="eyebrow">商品信息预览</span>
+      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-product-image <%= product.color %>"><img src="<%= product.image %>" alt="<%= product.name %>插画" width="480" height="350" data-product-image></div>
+      <p class="product-category mt-4"><%= product.categoryName %><%= product.isDemo ? ' · 示例商品' : '' %></p>
+      <h2 class="h4" id="product-title-<%= product.id %>"><%= product.name %></h2>
+      <p class="text-secondary product-description-short"><%= product.description %></p>
+      <p class="price"><span><%= product.isDemo ? '示例价' : '价格' %> ¥</span><%= product.price %></p>
+      <p class="text-secondary">库存：<%= product.stock %> 件<%= product.isDemo ? '（示例数据）' : '' %></p>
+      <p class="modal-disclaimer">商品信息来自 MySQL。示例记录仅供课程演示；购物车、下单与支付尚未开放。</p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline-brand" data-bs-dismiss="modal">继续逛逛</button>
+      <a class="btn btn-brand" href="<%= productUrl(product.id, query, category, pagination.page) %>">查看商品详情</a>
+    </div>
+  </div></div>
+</div>

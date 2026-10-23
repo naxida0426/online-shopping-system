@@ -3,6 +3,8 @@ const express = require("express");
 const path = require("node:path");
 const { getHomeCatalog } = require("./services/catalogService");
 const { checkDatabase, describeDatabaseError, closePool } = require("./config/db");
+const { readBrowseOptions, catalogUrl, productUrl } = require("./utils/catalog");
+const productRoutes = require("./routes/products");
 const app = express();
 
 app.set("view engine", "ejs");
@@ -11,24 +13,21 @@ app.disable("x-powered-by");
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/vendor/bootstrap", express.static(path.join(__dirname, "node_modules/bootstrap/dist")));
 
-app.locals.shopUrl = (query = "", category = "all") => {
-  const params = new URLSearchParams();
-  if (query) params.set("q", query);
-  if (category !== "all") params.set("category", category);
-  return `/${params.size ? `?${params}` : ""}#products`;
-};
+app.locals.shopUrl = catalogUrl;
+app.locals.productUrl = productUrl;
 app.locals.year = new Date().getFullYear();
 
 app.get("/", async (req, res, next) => {
-  const query = typeof req.query.q === "string" ? req.query.q.trim().slice(0, 100) : "";
-  const category = typeof req.query.category === "string" ? req.query.category : "all";
+  const options = readBrowseOptions(req.query);
   try {
-    const catalog = await getHomeCatalog({ query, category });
-    res.render("index", { title: "拾光商城 · 把喜欢带回日常", activePage: "home", query, ...catalog });
+    const catalog = await getHomeCatalog(options);
+    res.render("index", { title: "拾光商城 · 把喜欢带回日常", activePage: "home", query: options.query, ...catalog });
   } catch (error) {
     next(error);
   }
 });
+
+app.use("/products", productRoutes);
 
 app.get("/health/db", async (req, res) => {
   res.set("Cache-Control", "no-store");
@@ -55,13 +54,20 @@ app.use((req, res) => {
 
 app.use((error, req, res, next) => {
   if (res.headersSent) return next(error);
+  if (error instanceof URIError) {
+    return res.status(400).render("message", {
+      title: "链接地址有误", icon: "info", message: "链接地址有误",
+      description: "这个地址包含无效编码，请从商品列表重新打开。",
+      activePage: "products", query: "", actionUrl: "/products", actionLabel: "返回商品列表"
+    });
+  }
   // 不输出原始 SQL、连接配置或驱动错误详情，防止泄漏账号与凭据。
   const isDatabaseError = error.code === "DB_CONFIG_INVALID" || /^(DB_|ER_|ECONN|ETIMEDOUT|ENOTFOUND|EHOST|PROTOCOL_|POOL_)/.test(error.code || "");
   console.error(isDatabaseError ? "[database] 商品读取失败，请执行 npm run db:check。" : "[app] 请求处理失败。");
   res.status(isDatabaseError ? 503 : 500).render("message", {
     title: "商品暂不可用", icon: "info", message: "商品暂时无法加载",
     description: isDatabaseError ? describeDatabaseError(error) : "页面暂时不可用，请稍后重试。",
-    activePage: "home", query: ""
+    activePage: req.path.startsWith("/products") ? "products" : "home", query: ""
   });
 });
 

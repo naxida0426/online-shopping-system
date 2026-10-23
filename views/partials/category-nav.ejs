@@ -1,0 +1,10 @@
+<nav class="category-list" aria-label="商品分类">
+  <% categories.forEach(item => { %>
+    <a class="category-item <%= category === item.id ? 'is-active' : '' %>"
+       href="<%= shopUrl(query, item.id) %>" <%- category === item.id ? 'aria-current="true"' : '' %>>
+      <span class="category-icon"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#<%= item.icon %>"/></svg></span>
+      <span><%= item.name %></span>
+      <svg class="icon category-arrow" aria-hidden="true"><use href="/images/icons.svg#arrow"/></svg>
+    </a>
+  <% }) %>
+</nav>
