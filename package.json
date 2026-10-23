@@ -5,7 +5,13 @@
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "db:init": "node scripts/init-db.js",
+    "db:check": "node scripts/check-db.js",
+    "mysql:setup": "node scripts/local-mysql.js setup",
+    "mysql:start": "node scripts/local-mysql.js start",
+    "mysql:stop": "node scripts/local-mysql.js stop",
+    "mysql:status": "node scripts/local-mysql.js status",
+    "test": "node --test tests/*.test.js"
   },
   "repository": {
     "type": "git",
@@ -21,7 +27,9 @@
   "homepage": "https://github.com/naxida0426/online-shopping-system#readme",
   "dependencies": {
     "bootstrap": "^5.3.8",
+    "dotenv": "^18.0.9",
     "ejs": "^7.0.2",
-    "express": "^5.3.0"
+    "express": "^5.3.0",
+    "mysql2": "^3.24.6"
   }
 }

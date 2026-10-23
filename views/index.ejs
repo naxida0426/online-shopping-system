@@ -29,22 +29,22 @@
   </section>
 
   <section class="container-xl products-section" id="products" aria-labelledby="products-title">
-    <div class="section-heading products-heading"><div><span class="eyebrow">CURATED FOR YOUR EVERYDAY</span><h2 id="products-title"><%= query ? '搜索结果' : '本期精选' %><span class="heading-dot"> / </span><span class="heading-secondary">把喜欢带回家</span></h2></div><span class="results-count">共 <%= products.length %> 件演示好物</span></div>
-    <div class="demo-notice"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#info"/></svg><span>首页演示：以下商品与价格仅作视觉占位，尚未接入 MySQL，暂不支持购买。</span></div>
+    <div class="section-heading products-heading"><div><span class="eyebrow">CURATED FOR YOUR EVERYDAY</span><h2 id="products-title"><%= query ? '搜索结果' : '本期精选' %><span class="heading-dot"> / </span><span class="heading-secondary">把喜欢带回家</span></h2></div><span class="results-count">展示 <%= products.length %> 件好物</span></div>
+    <div class="demo-notice"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#info"/></svg><span>商品信息来自 MySQL；标注“示例商品”的记录仅供课程演示，当前暂不支持购买。</span></div>
     <% if (query || category !== 'all') { %>
       <div class="filter-summary"><span><% if (query) { %>关键词：<strong><%= query %></strong><% } %><% if (category !== 'all') { %><span class="ms-2">分类：<%= categories.find(item => item.id === category).name %></span><% } %></span><a href="/#products">清除筛选 <span aria-hidden="true">×</span></a></div>
     <% } %>
     <% if (!products.length) { %>
-      <div class="empty-state"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#search"/></svg><h3>暂时没有找到这件好物</h3><p>试试“台灯”“杯”或选择其他分类。</p><a href="/#products" class="btn btn-outline-brand">查看全部好物</a></div>
+      <div class="empty-state"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#search"/></svg><h3><%= query ? '暂时没有找到这件好物' : '暂时没有可展示的好物' %></h3><p><%= query ? '换个关键词或选择其他分类试试。' : '可以切换分类，或稍后再来看看。' %></p><a href="/#products" class="btn btn-outline-brand">查看全部好物</a></div>
     <% } else { %>
       <div class="row g-4 product-grid">
         <% products.forEach(product => { %>
           <div class="col-12 col-sm-6 col-lg-4">
             <article class="product-card">
-              <button class="product-visual <%= product.color %>" type="button" data-bs-toggle="modal" data-bs-target="#product-<%= product.id %>" aria-label="查看<%= product.name %>的演示预览">
+              <button class="product-visual <%= product.color %>" type="button" data-bs-toggle="modal" data-bs-target="#product-<%= product.id %>" aria-label="查看<%= product.name %>的信息预览">
                 <span class="product-tag"><%= product.tag %></span><img src="<%= product.image %>" alt="<%= product.name %>插画" width="480" height="350" loading="lazy"><span class="visual-open"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#expand"/></svg></span>
               </button>
-              <div class="product-info"><span class="product-category"><%= product.categoryName %> <span>· 演示商品</span></span><h3><button type="button" data-bs-toggle="modal" data-bs-target="#product-<%= product.id %>"><%= product.name %></button></h3><p><%= product.description %></p><div class="product-bottom"><span class="price"><span>¥</span><%= product.price %></span><button type="button" class="preview-button" data-bs-toggle="modal" data-bs-target="#product-<%= product.id %>">查看预览 <svg class="icon" aria-hidden="true"><use href="/images/icons.svg#arrow"/></svg></button></div></div>
+              <div class="product-info"><span class="product-category"><%= product.categoryName %> <span>· <%= product.isDemo ? '示例商品' : '商品展示' %></span></span><h3><button type="button" data-bs-toggle="modal" data-bs-target="#product-<%= product.id %>"><%= product.name %></button></h3><p><%= product.description %></p><div class="product-bottom"><span class="price"><span>¥</span><%= product.price %></span><button type="button" class="preview-button" data-bs-toggle="modal" data-bs-target="#product-<%= product.id %>">查看预览 <svg class="icon" aria-hidden="true"><use href="/images/icons.svg#arrow"/></svg></button></div></div>
             </article>
           </div>
         <% }) %>
@@ -60,7 +60,7 @@
   </div></section>
 
   <% products.forEach(product => { %>
-    <div class="modal fade" id="product-<%= product.id %>" tabindex="-1" aria-labelledby="product-title-<%= product.id %>" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><span class="eyebrow">演示商品预览</span><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button></div><div class="modal-body"><div class="modal-product-image <%= product.color %>"><img src="<%= product.image %>" alt="<%= product.name %>插画" width="480" height="350"></div><p class="product-category mt-4"><%= product.categoryName %></p><h2 class="h4" id="product-title-<%= product.id %>"><%= product.name %></h2><p class="text-secondary"><%= product.description %></p><p class="price"><span>演示价 ¥</span><%= product.price %></p><p class="modal-disclaimer">当前仅展示首页样式。商品详情、库存和购物车将在后续接入真实后端与 MySQL 后开放。</p></div><div class="modal-footer"><button type="button" class="btn btn-brand" data-bs-dismiss="modal">继续逛逛</button></div></div></div></div>
+    <div class="modal fade" id="product-<%= product.id %>" tabindex="-1" aria-labelledby="product-title-<%= product.id %>" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><span class="eyebrow">商品信息预览</span><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button></div><div class="modal-body"><div class="modal-product-image <%= product.color %>"><img src="<%= product.image %>" alt="<%= product.name %>插画" width="480" height="350"></div><p class="product-category mt-4"><%= product.categoryName %><%= product.isDemo ? ' · 示例商品' : '' %></p><h2 class="h4" id="product-title-<%= product.id %>"><%= product.name %></h2><p class="text-secondary"><%= product.description %></p><p class="price"><span><%= product.isDemo ? '示例价' : '价格' %> ¥</span><%= product.price %></p><p class="text-secondary">库存：<%= product.stock %> 件<%= product.isDemo ? '（示例数据）' : '' %></p><p class="modal-disclaimer">名称、价格和库存从 MySQL 读取。示例商品仅供课程演示；购物车、下单与支付尚未开放。</p></div><div class="modal-footer"><button type="button" class="btn btn-brand" data-bs-dismiss="modal">继续逛逛</button></div></div></div></div>
   <% }) %>
 </main>
 <%- include('partials/footer') %>
