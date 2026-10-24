@@ -130,6 +130,14 @@ CREATE TABLE IF NOT EXISTS payments (
   CONSTRAINT chk_payments_amount CHECK (amount >= 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+CREATE TABLE IF NOT EXISTS sessions (
+  session_id VARCHAR(128) COLLATE utf8mb4_bin NOT NULL,
+  expires INT UNSIGNED NOT NULL,
+  data MEDIUMTEXT COLLATE utf8mb4_bin,
+  PRIMARY KEY (session_id),
+  KEY idx_sessions_expires (expires)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
 -- 建表是 MySQL DDL，可能隐式提交。示例数据单独放在事务中。
 START TRANSACTION;
 

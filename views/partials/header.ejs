@@ -20,7 +20,15 @@
       <div class="collapse navbar-collapse" id="main-nav">
         <div class="navbar-nav main-nav"><a class="nav-link <%= activePage === 'home' ? 'active' : '' %>" href="/" <%- activePage === 'home' ? 'aria-current="page"' : '' %>>首页</a><a class="nav-link <%= activePage === 'products' ? 'active' : '' %>" href="/products" <%- activePage === 'products' ? 'aria-current="page"' : '' %>>发现好物</a></div>
         <form class="search-form" action="/products#products" method="get" role="search" aria-label="全站商品搜索"><label class="visually-hidden" for="site-search">搜索商品</label><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#search"/></svg><input id="site-search" name="q" type="search" maxlength="100" placeholder="搜索你的心动好物" value="<%= query %>"><% if (typeof category !== 'undefined' && category !== 'all') { %><input type="hidden" name="category" value="<%= category %>"><% } %><button type="submit" aria-label="搜索">搜索</button></form>
-        <div class="header-actions"><a href="/login" class="account-link <%= activePage === 'login' ? 'active' : '' %>"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#user"/></svg>登录</a><span class="action-divider"></span><a href="/register" class="register-link">注册</a><a href="/cart" class="cart-link" aria-label="购物车（功能待开放）"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#bag"/></svg><span>购物车</span></a></div>
+        <div class="header-actions">
+          <% if (typeof currentUser !== 'undefined' && currentUser) { %>
+            <a href="/account" class="account-link <%= activePage === 'account' ? 'active' : '' %>"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#user"/></svg><span class="account-name"><%= currentUser.username %></span></a>
+            <form action="/logout" method="post" class="logout-form"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="logout-button">退出</button></form>
+          <% } else { %>
+            <a href="/login" class="account-link <%= activePage === 'login' ? 'active' : '' %>"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#user"/></svg>登录</a><span class="action-divider"></span><a href="/register" class="register-link">注册</a>
+          <% } %>
+          <a href="/cart" class="cart-link" aria-label="购物车（功能待开放）"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#bag"/></svg><span>购物车</span></a>
+        </div>
       </div>
     </nav>
   </header>

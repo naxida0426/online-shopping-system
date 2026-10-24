@@ -1,0 +1,16 @@
+<%- include('../partials/header') %>
+<main id="main-content" class="container-xl auth-page">
+  <section class="auth-intro"><span class="eyebrow">WELCOME BACK</span><h1>欢迎回来，<br>继续发现日常好物。</h1><p>登录拾光，发现生活中的每一份喜欢。</p><a href="/products" class="auth-back">先去逛逛 <span aria-hidden="true">→</span></a><div class="auth-illustration" aria-hidden="true"><img src="/images/lamp.svg" alt="" width="320" height="320"></div></section>
+  <section class="auth-card" aria-labelledby="login-title"><span class="eyebrow">拾光账户</span><h2 id="login-title">登录</h2><p class="auth-subtitle">还没有账号？<a href="/register?next=<%= encodeURIComponent(nextUrl) %>">创建新账户</a></p>
+    <% if (registered) { %><div class="alert alert-success" role="status">注册成功，请使用刚刚的账号登录。</div><% } %>
+    <%- include('errors', { errors }) %>
+    <form action="/login" method="post" class="auth-form">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="next" value="<%= nextUrl %>">
+      <div class="mb-4"><label for="identifier" class="form-label">用户名或邮箱</label><input id="identifier" name="identifier" class="form-control" required maxlength="191" autocomplete="username" value="<%= values.identifier || '' %>" placeholder="输入用户名或邮箱"></div>
+      <div class="mb-4"><label for="password" class="form-label">密码</label><input id="password" name="password" type="password" class="form-control" required maxlength="72" autocomplete="current-password" placeholder="输入密码"></div>
+      <button type="submit" class="btn btn-brand w-100">登录账户 <span aria-hidden="true">→</span></button>
+      <p class="auth-note">使用个人设备时，登录状态最多保留 8 小时。公共设备使用后请退出账户。</p>
+    </form>
+  </section>
+</main>
+<%- include('../partials/footer') %>

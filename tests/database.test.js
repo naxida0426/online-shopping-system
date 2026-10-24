@@ -29,7 +29,7 @@ test("真实 MySQL：初始化、约束、参数化查询、HTTP 与跨进程持
       assert.equal(lamp.stock, 17);
       const [[counts]] = await pool.execute("SELECT COUNT(*) AS count FROM products WHERE is_demo = 1");
       assert.equal(counts.count, 6);
-      assert.equal((await checkDatabase()).tables, 7);
+      assert.equal((await checkDatabase()).tables, 8);
     });
 
     await t.test("商品查询来自数据库，下架、组合筛选和注入输入得到正确处理", async () => {
@@ -103,9 +103,13 @@ test("真实 MySQL：初始化、约束、参数化查询、HTTP 与跨进程持
     await t.test("第 3 天：列表、详情、分页与商品可见性", async subtest => {
       await require("./catalog-integration")(subtest, { pool, base: `http://127.0.0.1:${server.address().port}` });
     });
+    await t.test("账户注册、登录与持久会话", async subtest => {
+      await require("./auth-integration")(subtest, { pool, base: `http://127.0.0.1:${server.address().port}` });
+    });
   } finally {
     if (original) await getPool().execute("UPDATE products SET price = ?, stock = ?, status = ? WHERE sku = ?", [original.price, original.stock, original.status, "DEMO-LAMP"]);
     if (server) { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }
+    await require("../config/session").closeSessionStore();
     await closePool();
   }
 });

@@ -78,6 +78,7 @@ async function setup() {
     if (configured.DB_HOST !== "127.0.0.1" || Number(configured.DB_PORT) !== metadata.port) {
       throw new LocalMysqlError(".env 已切换到其他数据库，不重复初始化便携环境。请按 README 使用现有数据库。");
     }
+    await require("./setup-session").setupSession();
     await start();
     await run(process.execPath, [path.join(__dirname, "init-db.js")]);
     await run(process.execPath, [path.join(__dirname, "check-db.js")]);
@@ -140,6 +141,7 @@ async function setup() {
     updated = matcher.test(updated) ? updated.replace(matcher, `${key}=${value}`) : `${updated.trimEnd()}\n${key}=${value}\n`;
   }
   await fs.writeFile(envPath, updated, { mode: 0o600 });
+  await require("./setup-session").setupSession();
   await fs.writeFile(metadataPath, JSON.stringify({ version, port }, null, 2));
   await fs.unlink(bootstrapPath);
   await run(process.execPath, [path.join(__dirname, "init-db.js")]);

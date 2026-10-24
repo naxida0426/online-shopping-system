@@ -1,0 +1,17 @@
+<%- include('../partials/header') %>
+<main id="main-content" class="container-xl auth-page">
+  <section class="auth-intro"><span class="eyebrow">NICE TO MEET YOU</span><h1>从这里开始，<br>把喜欢带回日常。</h1><p>创建一个属于你的拾光账户。</p><a href="/products" class="auth-back">探索商城 <span aria-hidden="true">→</span></a><div class="auth-illustration" aria-hidden="true"><img src="/images/mug.svg" alt="" width="320" height="320"></div></section>
+  <section class="auth-card" aria-labelledby="register-title"><span class="eyebrow">初次见面</span><h2 id="register-title">创建账户</h2><p class="auth-subtitle">已有账号？<a href="/login?next=<%= encodeURIComponent(nextUrl) %>">前往登录</a></p>
+    <%- include('errors', { errors }) %>
+    <form action="/register" method="post" class="auth-form">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="next" value="<%= nextUrl %>">
+      <div class="mb-3"><label for="username" class="form-label">用户名</label><input id="username" name="username" class="form-control" required minlength="3" maxlength="30" autocomplete="username" value="<%= values.username || '' %>" aria-describedby="username-help"><div id="username-help" class="form-text">3–30 个中文、字母、数字或下划线。</div></div>
+      <div class="mb-3"><label for="email" class="form-label">邮箱</label><input id="email" name="email" type="email" class="form-control" required maxlength="191" autocomplete="email" value="<%= values.email || '' %>"></div>
+      <div class="mb-3"><label for="password" class="form-label">密码</label><input id="password" name="password" type="password" class="form-control" required minlength="8" maxlength="72" autocomplete="new-password" aria-describedby="password-help"><div id="password-help" class="form-text">至少 8 个字符，最多 72 个 UTF-8 字节；中文通常占 3 字节。</div></div>
+      <div class="mb-4"><label for="confirm-password" class="form-label">确认密码</label><input id="confirm-password" name="confirmPassword" type="password" class="form-control" required minlength="8" maxlength="72" autocomplete="new-password"></div>
+      <button type="submit" class="btn btn-brand w-100">注册账户 <span aria-hidden="true">→</span></button>
+      <p class="auth-note">这是课程演示网站，请使用演示邮箱和独立密码。当前尚未开放邮件验证与密码找回。</p>
+    </form>
+  </section>
+</main>
+<%- include('../partials/footer') %>

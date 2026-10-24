@@ -1,0 +1,8 @@
+<%- include('../partials/header') %>
+<main id="main-content" class="container-xl account-page">
+  <div class="account-heading"><div><span class="eyebrow">MY ACCOUNT</span><h1>你好，<%= currentUser.username %></h1><p>欢迎来到你的拾光账户。</p></div><a class="btn btn-outline-brand" href="/products">继续逛逛 <span aria-hidden="true">→</span></a></div>
+  <section class="account-card" aria-labelledby="account-info"><h2 id="account-info">账户信息</h2><dl class="account-details"><div><dt>用户名</dt><dd><%= currentUser.username %></dd></div><div><dt>邮箱</dt><dd><%= currentUser.email %></dd></div><div><dt>账户类型</dt><dd><%= currentUser.role === 'admin' ? '管理员' : '顾客' %></dd></div><div><dt>注册时间</dt><dd><%= String(currentUser.created_at).slice(0, 10) %></dd></div></dl><p class="auth-note">购物车、订单和支付功能正在开发中。当前可以浏览商品和管理登录状态。</p>
+    <form action="/logout" method="post"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="btn btn-outline-brand">退出登录</button></form>
+  </section>
+</main>
+<%- include('../partials/footer') %>
