@@ -27,7 +27,7 @@
           <% } else { %>
             <a href="/login" class="account-link <%= activePage === 'login' ? 'active' : '' %>"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#user"/></svg>登录</a><span class="action-divider"></span><a href="/register" class="register-link">注册</a>
           <% } %>
-          <a href="/cart" class="cart-link" aria-label="购物车（功能待开放）"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#bag"/></svg><span>购物车</span></a>
+          <a href="/cart" class="cart-link <%= activePage === 'cart' ? 'active' : '' %>" <%- activePage === 'cart' ? 'aria-current="page"' : '' %> aria-label="购物车"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#bag"/></svg><span>购物车</span></a>
         </div>
       </div>
     </nav>

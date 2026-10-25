@@ -23,8 +23,19 @@
         <div><dt>商品编号</dt><dd><%= product.sku %></dd></div>
         <div><dt><%= product.isDemo ? '示例库存' : '当前库存' %></dt><dd><span class="stock-status <%= product.stock === 0 ? 'is-empty' : '' %>"><%= product.stock > 0 ? '有货' : '暂时缺货' %></span><span class="detail-stock-count"><%= product.stock %> 件</span></dd></div>
       </dl>
-      <div class="detail-actions"><button class="btn btn-brand" type="button" disabled>购物车功能即将开放</button><a class="btn btn-outline-brand" href="<%= backUrl %>">继续选购</a></div>
-      <div class="demo-notice detail-notice"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#info"/></svg><span>商品信息来自 MySQL。<%= product.isDemo ? '此条记录为示例商品。' : '' %>当前仅开放浏览，暂不支持下单与支付。</span></div>
+      <div class="detail-actions">
+        <% if (product.stock === 0) { %><button class="btn btn-brand" type="button" disabled>暂时缺货</button>
+        <% } else if (!currentUser) { %><a class="btn btn-brand" href="<%= loginUrl %>">登录后加入购物车</a>
+        <% } else { %>
+          <form action="/cart/items" method="post" class="add-cart-form">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="productId" value="<%= product.id %>">
+            <label for="product-quantity">数量</label><input class="form-control" id="product-quantity" type="number" name="quantity" min="1" max="<%= Math.min(product.stock, 999) %>" step="1" value="1" required>
+            <button class="btn btn-brand" type="submit">加入购物车</button>
+          </form>
+        <% } %>
+        <a class="btn btn-outline-brand" href="<%= backUrl %>">继续选购</a>
+      </div>
+      <div class="demo-notice detail-notice"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#info"/></svg><span>商品信息来自 MySQL。<%= product.isDemo ? '此条记录为示例商品。' : '' %>购物车已开放，加入不会预留或扣减库存；下单与支付尚未开放。</span></div>
     </div>
   </article>
   <section class="detail-description" aria-labelledby="description-title"><span class="eyebrow">A LITTLE MORE ABOUT IT</span><h2 id="description-title">关于这件好物</h2><p><%= product.description %></p></section>

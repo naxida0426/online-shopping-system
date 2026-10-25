@@ -6,8 +6,9 @@ const { checkDatabase, describeDatabaseError, closePool } = require("./config/db
 const { readBrowseOptions, catalogUrl, productUrl } = require("./utils/catalog");
 const productRoutes = require("./routes/products");
 const authRoutes = require("./routes/auth");
+const cartRoutes = require("./routes/cart");
 const { sessionMiddleware, closeSessionStore, validateSessionSecret } = require("./config/session");
-const { loadCurrentUser, requireAuth } = require("./middleware/auth");
+const { loadCurrentUser } = require("./middleware/auth");
 const app = express();
 
 app.set("view engine", "ejs");
@@ -54,10 +55,7 @@ app.get("/", async (req, res, next) => {
 
 app.use("/products", productRoutes);
 
-app.get("/cart", requireAuth, (req, res) => res.render("message", {
-  title: "购物车", icon: "bag", message: "你的好物清单，即将上线",
-  description: "你已登录。购物车将在下一阶段开放，当前暂不支持加入商品、下单或支付。", activePage: "cart", query: ""
-}));
+app.use("/cart", cartRoutes);
 
 app.use((req, res) => {
   res.status(404).render("message", { title: "页面未找到", icon: "search", message: "这页小美好，还没找到", description: "页面地址可能有误，返回首页继续逛逛吧。", activePage: "", query: "" });

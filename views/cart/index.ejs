@@ -1,0 +1,27 @@
+<%- include('../partials/header') %>
+<main id="main-content" class="container-xl cart-page">
+  <div class="cart-heading"><div><span class="eyebrow">YOUR EVERYDAY PICKS</span><h1>我的购物车 <span><%= cart.items.length %> 种 · <%= cart.quantity %> 件</span></h1><p>把喜欢留在这里，慢慢挑选。</p></div><a href="/products" class="btn btn-outline-brand">继续选购 <span aria-hidden="true">→</span></a></div>
+  <% if (notice) { %><div class="alert alert-success" role="status"><%= notice %></div><% } %>
+  <% if (errorMessage) { %><div class="alert alert-danger" role="alert"><strong>操作未完成：</strong><%= errorMessage %></div><% } %>
+  <% if (!cart.items.length) { %>
+    <section class="empty-state cart-empty" aria-labelledby="empty-cart"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#bag"/></svg><h2 id="empty-cart">购物车还是空的</h2><p>在商品详情页选择数量，就能把喜欢的好物放进来。</p><a href="/products" class="btn btn-brand">去发现好物</a></section>
+  <% } else { %>
+    <div class="cart-layout">
+      <section class="cart-items" aria-label="购物车商品">
+        <% cart.items.forEach(item => { %>
+          <article class="cart-item <%= item.available ? '' : 'cart-item-unavailable' %>" aria-labelledby="cart-name-<%= item.id %>">
+            <div class="cart-item-main"><a class="cart-image" href="/products/<%= item.productId %>"><img src="<%= item.image %>" alt="<%= item.name %>" width="112" height="112" data-product-image></a><div class="cart-item-copy"><span class="eyebrow"><%= item.isDemo ? '示例商品' : '拾光好物' %></span><h2 id="cart-name-<%= item.id %>"><a href="/products/<%= item.productId %>"><%= item.name %></a></h2><p class="cart-sku">编号：<%= item.sku %></p><p class="cart-unit">单价 <strong>¥<%= item.price %></strong></p></div></div>
+            <% if (!item.available) { %><p class="cart-warning"><%= item.reason %>，暂不计入合计。<%= item.canUpdate ? '请减少数量后更新。' : '可删除这件商品。' %></p><% } %>
+            <div class="cart-item-actions">
+              <form action="/cart/items/<%= item.id %>/quantity" method="post" class="cart-quantity-form"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><label for="quantity-<%= item.id %>">数量</label><input id="quantity-<%= item.id %>" name="quantity" class="form-control" type="number" min="1" max="<%= Math.max(1, item.maxQuantity) %>" step="1" value="<%= item.quantity %>" required <%= item.canUpdate ? '' : 'disabled' %>><button type="submit" class="btn btn-outline-brand btn-sm" <%= item.canUpdate ? '' : 'disabled' %>>更新</button></form>
+              <div class="cart-line-total"><span>小计</span><strong><%= item.available ? '¥' + item.subtotal : '暂不计入' %></strong></div>
+              <form action="/cart/items/<%= item.id %>/delete" method="post" class="cart-delete-form"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="cart-delete" aria-label="删除<%= item.name %>">删除</button></form>
+            </div>
+          </article>
+        <% }) %>
+      </section>
+      <aside class="cart-summary" aria-labelledby="cart-summary-title"><span class="eyebrow">A LITTLE COLLECTION</span><h2 id="cart-summary-title">好物清单</h2><dl><div><dt>清单商品</dt><dd><%= cart.items.length %> 种 / <%= cart.quantity %> 件</dd></div><div><dt>计入合计</dt><dd><%= cart.validQuantity %> 件</dd></div></dl><% if (cart.unavailableCount) { %><p class="cart-warning"><%= cart.unavailableCount %> 种商品需调整，未计入合计。</p><% } %><div class="cart-total"><span>商品合计</span><strong>¥<%= cart.total %></strong></div><p class="cart-summary-note">按数据库当前价格计算。加入购物车不会预留库存，价格与库存可能变化。</p><button type="button" class="btn btn-brand w-100" disabled>结算功能即将开放</button><p class="cart-summary-note">当前支持保存和调整购物车，暂不支持下单与支付。</p></aside>
+    </div>
+  <% } %>
+</main>
+<%- include('../partials/footer') %>

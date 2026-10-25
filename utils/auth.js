@@ -22,7 +22,7 @@ function verifyCsrf(req, res, next) {
     return res.status(403).render("message", {
       title: "请重新打开表单", icon: "info", message: "表单已失效，请刷新后重试",
       description: "为保护你的账户，这次操作没有执行。请重新打开页面再提交。",
-      activePage: "", query: "", actionUrl: req.path === "/register" ? "/register" : "/login", actionLabel: "重新打开表单"
+      activePage: "", query: "", actionUrl: req.baseUrl.toLowerCase() === "/cart" ? "/cart" : req.path === "/register" ? "/register" : "/login", actionLabel: "重新打开表单"
     });
   }
   next();

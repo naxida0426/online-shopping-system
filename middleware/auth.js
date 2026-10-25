@@ -20,7 +20,8 @@ async function loadCurrentUser(req, res, next) {
 
 function requireAuth(req, res, next) {
   res.set("Cache-Control", "no-store");
-  if (!req.user) return res.redirect(303, `/login?next=${encodeURIComponent(safeReturnTo(req.originalUrl))}`);
+  const returnTo = req.baseUrl.toLowerCase() === "/cart" ? "/cart" : req.originalUrl;
+  if (!req.user) return res.redirect(303, `/login?next=${encodeURIComponent(safeReturnTo(returnTo))}`);
   next();
 }
 

@@ -1,6 +1,6 @@
 const express = require("express");
 const { getProductList, getProductById } = require("../services/catalogService");
-const { readBrowseOptions, catalogUrl } = require("../utils/catalog");
+const { readBrowseOptions, catalogUrl, productUrl } = require("../utils/catalog");
 const router = express.Router();
 
 router.get("/", async (req, res, next) => {
@@ -29,6 +29,7 @@ router.get("/:id", async (req, res, next) => {
     res.render("products/show", {
       title: `${product.name} · 拾光商城`, activePage: "products", product,
       query: options.query, category: options.category,
+      loginUrl: `/login?next=${encodeURIComponent(productUrl(product.id, options.query, options.category, options.page))}`,
       backUrl: catalogUrl(options.query, options.category, options.page)
     });
   } catch (error) { next(error); }
