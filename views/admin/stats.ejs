@@ -1,0 +1,26 @@
+<%- include('../partials/header') %>
+<main id="main-content" class="container-xl order-page">
+  <%- include('nav') %>
+  <div class="cart-heading"><div><span class="eyebrow">SALES OVERVIEW</span><h1>销售统计</h1><p>所有数据来自 MySQL，金额均为课程模拟交易。</p></div></div>
+  <form action="/admin/stats" method="get" class="order-filters">
+    <div><label for="range-start">开始日期</label><input class="form-control" id="range-start" name="start" type="date" required value="<%= stats.start %>"></div>
+    <div><label for="range-end">结束日期</label><input class="form-control" id="range-end" name="end" type="date" required value="<%= stats.end %>"></div>
+    <button class="btn btn-brand">查看统计</button>
+  </form>
+  <div class="stats-metrics">
+    <section class="order-card"><span>区间新建订单</span><strong><%= stats.orderCount %></strong></section>
+    <section class="order-card"><span>区间已支付订单</span><strong><%= stats.paidCount %></strong></section>
+    <section class="order-card"><span>已支付销售额</span><strong>¥<%= stats.salesAmount %></strong></section>
+  </div>
+  <p class="cart-summary-note">新建订单按创建日期统计；已支付订单数、销售额和销量按模拟支付日期统计，包含结束日期。未支付和已取消订单不计收入。尚未实现退款；后续增加退款时需同步调整统计。</p>
+  <section class="order-card mt-4"><h2>每日已支付销售额</h2><div class="stats-chart"><canvas id="sales-chart" role="img" aria-label="每日模拟支付销售额柱状图"></canvas></div><% if(!stats.paidCount){ %><p>该区间暂无已支付订单，图表按零值展示。</p><% } %></section>
+  <script type="application/json" id="sales-data"><%- safeJson({labels:stats.labels,sales:stats.sales}) %></script>
+  <div class="table-responsive admin-table"><table class="table">
+    <caption>商品销量，最多展示前 20 件；商品软删除后仍保留历史统计</caption><thead><tr><th>商品</th><th>销量</th><th>快照收入</th></tr></thead>
+    <tbody><% stats.products.forEach(p=>{ %><tr><td><%= p.name %></td><td><%= p.quantity %></td><td>¥<%= p.revenue %></td></tr><% }) %><% if(!stats.products.length){ %><tr><td colspan="3">暂无已支付商品销量。</td></tr><% } %></tbody>
+  </table></div>
+  <div class="table-responsive"><table class="table"><caption>图表对应数据</caption><thead><tr><th>支付日期</th><th>模拟销售额</th></tr></thead><tbody><% stats.labels.forEach((day,i)=>{ %><tr><td><%= day %></td><td>¥<%= stats.sales[i] %></td></tr><% }) %></tbody></table></div>
+</main>
+<script src="/vendor/chart.js/chart.umd.min.js" defer></script>
+<script src="/js/admin-stats.js" defer></script>
+<%- include('../partials/footer') %>

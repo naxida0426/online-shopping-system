@@ -8,6 +8,7 @@ const productRoutes = require("./routes/products");
 const authRoutes = require("./routes/auth");
 const cartRoutes = require("./routes/cart");
 const orderRoutes = require("./routes/orders");
+const adminRoutes = require("./routes/admin");
 const { sessionMiddleware, closeSessionStore, validateSessionSecret } = require("./config/session");
 const { loadCurrentUser } = require("./middleware/auth");
 const app = express();
@@ -24,10 +25,12 @@ app.use((req, res, next) => {
 });
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/vendor/bootstrap", express.static(path.join(__dirname, "node_modules/bootstrap/dist")));
+app.use("/vendor/chart.js", express.static(path.join(__dirname, "node_modules/chart.js/dist")));
 
 app.locals.shopUrl = catalogUrl;
 app.locals.productUrl = productUrl;
 app.locals.year = new Date().getFullYear();
+app.locals.safeJson = value => JSON.stringify(value).replace(/</g, "\\u003c");
 app.locals.currentUser = null;
 app.locals.csrfToken = "";
 
@@ -58,6 +61,7 @@ app.use("/products", productRoutes);
 
 app.use("/cart", cartRoutes);
 app.use(orderRoutes);
+app.use("/admin", adminRoutes);
 
 app.use((req, res) => {
   res.status(404).render("message", { title: "页面未找到", icon: "search", message: "这页小美好，还没找到", description: "页面地址可能有误，返回首页继续逛逛吧。", activePage: "", query: "" });

@@ -2,7 +2,7 @@
 <main id="main-content" class="container-xl order-page">
   <nav class="shop-breadcrumb" aria-label="结算步骤"><a href="/cart">购物车</a><span aria-hidden="true">/</span><span aria-current="page">确认订单</span></nav>
   <div class="cart-heading"><div><span class="eyebrow">ONE STEP CLOSER</span><h1>确认订单</h1><p>核对好物和收货信息，再把喜欢带回日常。</p></div><a class="btn btn-outline-brand" href="/cart">返回购物车</a></div>
-  <div class="demo-notice"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#info"/></svg><span>课程演示，请填写虚构收货信息。提交会保存订单并扣减库存，当前不会产生资金扣款；支付功能尚未开放。</span></div>
+  <div class="demo-notice"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#info"/></svg><span>课程演示，请填写虚构收货信息。提交会保存订单并扣减库存，当前不会产生资金扣款；支付仅为课程模拟，不涉及真实扣款。</span></div>
   <% if (errors.length) { %><div class="alert alert-danger mt-3" role="alert"><strong>订单未创建，请检查：</strong><ul class="mb-0"><% errors.forEach(error => { %><li><%= error %></li><% }) %></ul></div><% } %>
   <% if (blocked) { %><div class="alert alert-warning mt-3" role="alert">购物车为空、含有失效商品或金额超出支持范围。请<a href="/cart">返回购物车</a>调整后再结算。失效商品不会被悄悄略过下单。</div><% } %>
   <form action="/orders" method="post" class="checkout-layout">
@@ -15,7 +15,7 @@
     <section class="order-card" aria-labelledby="checkout-items-title"><span class="eyebrow">YOUR SELECTION</span><h2 id="checkout-items-title">本次好物 <small><%= cart.quantity %> 件</small></h2>
       <div class="checkout-items"><% cart.items.forEach(item => { %><div class="checkout-item"><div><strong><%= item.name %></strong><span>¥<%= item.price %> × <%= item.quantity %></span><% if (!item.available) { %><p class="cart-warning"><%= item.reason %></p><% } %></div><strong><%= item.available ? '¥' + item.subtotal : '不可下单' %></strong></div><% }) %></div>
       <div class="cart-total"><span>商品合计（无运费及优惠）</span><strong>¥<%= cart.total %></strong></div><p class="cart-summary-note">提交时会再次核对价格、商品状态和库存。只有整笔订单成功保存后，才会清空已结算的购物车。</p>
-      <button class="btn btn-brand w-100 mt-4" type="submit" <%= blocked ? 'disabled' : '' %>>提交订单</button><p class="cart-summary-note">订单初始状态为“待确认 / 未支付”，支付与取消流程将在下一阶段开放。</p>
+      <button class="btn btn-brand w-100 mt-4" type="submit" <%= blocked ? 'disabled' : '' %>>提交订单</button><p class="cart-summary-note">订单初始状态为“待确认 / 未支付”，可继续模拟支付，也可取消未支付订单恢复库存。</p>
     </section>
   </form>
 </main>

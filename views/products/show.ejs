@@ -35,7 +35,7 @@
         <% } %>
         <a class="btn btn-outline-brand" href="<%= backUrl %>">继续选购</a>
       </div>
-      <div class="demo-notice detail-notice"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#info"/></svg><span>商品信息来自 MySQL。<%= product.isDemo ? '此条记录为示例商品。' : '' %>加入购物车不会预留库存，提交订单后扣减库存；当前尚未开放支付。</span></div>
+      <div class="demo-notice detail-notice"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#info"/></svg><span>商品信息来自 MySQL。<%= product.isDemo ? '此条记录为示例商品。' : '' %>加入购物车不会预留库存，提交订单后扣减库存；支付仅为课程模拟，不涉及真实扣款。</span></div>
     </div>
   </article>
   <section class="detail-description" aria-labelledby="description-title"><span class="eyebrow">A LITTLE MORE ABOUT IT</span><h2 id="description-title">关于这件好物</h2><p><%= product.description %></p></section>

@@ -10,6 +10,7 @@ test("真实 MySQL：初始化、约束、参数化查询、HTTP 与跨进程持
   assert.match(testDatabase, /^[a-zA-Z_][a-zA-Z0-9_]*_test$/);
   assert.notEqual(testDatabase, process.env.DB_NAME, "测试库必须与运行库不同");
   process.env.DB_NAME = testDatabase;
+  process.env.MAIL_ENABLED = "false"; // 自动测试绝不向外部邮箱发信。
   const { initializeDatabase } = require("../scripts/init-db");
   const { getPool, closePool, checkDatabase } = require("../config/db");
   const { getHomeCatalog } = require("../services/catalogService");
@@ -29,7 +30,7 @@ test("真实 MySQL：初始化、约束、参数化查询、HTTP 与跨进程持
       assert.equal(lamp.stock, 17);
       const [[counts]] = await pool.execute("SELECT COUNT(*) AS count FROM products WHERE is_demo = 1");
       assert.equal(counts.count, 6);
-      assert.equal((await checkDatabase()).tables, 8);
+      assert.equal((await checkDatabase()).tables, 9);
     });
 
     await t.test("商品查询来自数据库，下架、组合筛选和注入输入得到正确处理", async () => {
@@ -108,6 +109,9 @@ test("真实 MySQL：初始化、约束、参数化查询、HTTP 与跨进程持
     });
     await t.test("订单创建、事务回滚和并发库存", async subtest => {
       await require("./order-integration")(subtest, { pool, base: `http://127.0.0.1:${server.address().port}` });
+    });
+    await t.test("模拟支付、后台管理、统计及邮件", async subtest => {
+      await require("./business-integration")(subtest, { pool, base: `http://127.0.0.1:${server.address().port}` });
     });
     await t.test("账户注册、登录与持久会话", async subtest => {
       await require("./auth-integration")(subtest, { pool, base: `http://127.0.0.1:${server.address().port}` });

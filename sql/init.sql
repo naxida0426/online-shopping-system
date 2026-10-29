@@ -130,6 +130,17 @@ CREATE TABLE IF NOT EXISTS payments (
   CONSTRAINT chk_payments_amount CHECK (amount >= 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+CREATE TABLE IF NOT EXISTS order_emails (
+  order_id INT UNSIGNED NOT NULL,
+  status ENUM('pending','sending','sent','failed','skipped') NOT NULL DEFAULT 'pending',
+  attempts INT UNSIGNED NOT NULL DEFAULT 0,
+  last_error VARCHAR(40) NULL,
+  sent_at DATETIME NULL,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (order_id),
+  CONSTRAINT fk_email_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 CREATE TABLE IF NOT EXISTS sessions (
   session_id VARCHAR(128) COLLATE utf8mb4_bin NOT NULL,
   expires INT UNSIGNED NOT NULL,

@@ -5,6 +5,7 @@ const { unavailableReason } = require("./cartService");
 const { cartFingerprint, shippingInput, validCheckoutToken } = require("../utils/checkout");
 const { toCents, formatCents } = require("../utils/money");
 const { isValidProductId } = require("../utils/catalog");
+const { readOrderOptions, orderPagination } = require("../utils/orders");
 const MAX_ORDER_CENTS = 999999999999n; // orders.total_amount DECIMAL(12,2)
 
 class OrderError extends Error {
@@ -57,26 +58,38 @@ async function createOrder(userId, token, draft, shipping) {
   });
 }
 
-const orderColumns = `id, order_no AS orderNo, total_amount AS total, order_status AS orderStatus,
-  payment_status AS paymentStatus, created_at AS createdAt`;
+const orderColumns = `o.id, o.order_no AS orderNo, o.total_amount AS total, o.order_status AS orderStatus,
+  o.payment_status AS paymentStatus, o.created_at AS createdAt, o.paid_at AS paidAt, o.cancelled_at AS cancelledAt`;
 
-async function getOrders(userId) {
-  const [orders] = await getPool().execute(`SELECT ${orderColumns} FROM orders WHERE user_id = ? ORDER BY id DESC LIMIT 20`, [userId]);
-  return orders;
+async function getOrders(userId, input = {}) {
+  const options = readOrderOptions(input), conditions = ["o.user_id = ?"], params = [userId];
+  const filters = { unpaid: "o.order_status = 'pending' AND o.payment_status = 'unpaid'", paid: "o.payment_status = 'paid' AND o.order_status <> 'cancelled'", cancelled: "o.order_status = 'cancelled'" };
+  if (filters[options.status]) conditions.push(filters[options.status]);
+  if (options.query) { conditions.push("o.order_no LIKE ? ESCAPE '!'"); params.push(`%${options.query.replace(/[!%_]/g, "!$&")}%`); }
+  const where = `FROM orders o WHERE ${conditions.join(" AND ")}`;
+  const [[count]] = await getPool().execute(`SELECT COUNT(*) AS total ${where}`, params);
+  const pagination = orderPagination(Number(count.total), options.page);
+  const [orders] = await getPool().execute(`SELECT ${orderColumns} ${where} ORDER BY o.id DESC LIMIT ? OFFSET ?`, [...params, String(pagination.pageSize), String((pagination.page - 1) * pagination.pageSize)]);
+  return { orders, pagination, ...options, page: pagination.page };
 }
 
 async function getOwnOrder(userId, id) {
   if (!["string", "number"].includes(typeof id) || !isValidProductId(id)) return null;
   const [[order]] = await getPool().execute(
-    `SELECT ${orderColumns}, recipient_name AS recipientName, recipient_phone AS recipientPhone,
-     recipient_address AS recipientAddress FROM orders WHERE id = ? AND user_id = ?`, [Number(id), userId]
+    `SELECT ${orderColumns}, o.recipient_name AS recipientName, o.recipient_phone AS recipientPhone,
+     o.recipient_address AS recipientAddress, p.payment_no AS paymentNo, p.amount AS paymentAmount,
+     p.status AS recordStatus, p.paid_at AS recordPaidAt, e.status AS emailStatus, e.attempts AS emailAttempts
+     FROM orders o LEFT JOIN payments p ON p.order_id = o.id LEFT JOIN order_emails e ON e.order_id = o.id
+     WHERE o.id = ? AND o.user_id = ?`, [Number(id), userId]
   );
   if (!order) return null;
   const [items] = await getPool().execute(
     `SELECT product_id AS productId, product_name AS name, unit_price AS price, quantity, subtotal
      FROM order_items WHERE order_id = ? ORDER BY id`, [order.id]
   );
-  return { ...order, items };
+  const { paymentNo, paymentAmount, recordStatus, recordPaidAt, ...details } = order;
+  return { ...details, items, canPay: order.orderStatus === "pending" && order.paymentStatus === "unpaid",
+    payment: paymentNo ? { paymentNo, amount: paymentAmount, status: recordStatus, paidAt: recordPaidAt } : null };
 }
 
 module.exports = { createOrder, getOrders, getOwnOrder, OrderError, MAX_ORDER_CENTS };

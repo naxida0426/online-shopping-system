@@ -33,7 +33,7 @@ function getMiddleware() {
 
 function sessionMiddleware(req, res, next) {
   // 匿名浏览商品不创建会话；需要账户操作或已有会话时才访问会话表。
-  if (!/^\/(login|register|logout|account|cart|checkout|orders)(\/|$)/i.test(req.path) &&
+  if (!/^\/(login|register|logout|account|cart|checkout|orders|admin)(\/|$)/i.test(req.path) &&
       !(req.headers.cookie || "").split(";").some(part => part.trim().startsWith(`${cookieName}=`))) return next();
   try { getMiddleware()(req, res, next); } catch (error) { next(error); }
 }

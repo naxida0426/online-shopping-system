@@ -4,12 +4,13 @@ const { safeReturnTo } = require("../utils/auth");
 const { registrationInput } = require("../services/userService");
 const { validateSessionSecret } = require("../config/session");
 
-test("登录返回地址只允许本站已有的顾客页面", () => {
-  for (const value of ["https://evil.invalid", "//evil.invalid", "/\\evil.invalid", "/%5cevil.invalid", "/products%0d%0aX-Test:1", "/admin", ["/cart"]]) {
+test("登录返回地址只允许本站已有页面，管理员权限由路由单独验证", () => {
+  for (const value of ["https://evil.invalid", "//evil.invalid", "/\\evil.invalid", "/%5cevil.invalid", "/products%0d%0aX-Test:1", "/admin.evil", ["/cart"]]) {
     assert.equal(safeReturnTo(value), "/account");
   }
   for (const value of ["/", "/cart", "/account", "/products?q=%E6%9D%AF&page=2", "/products/1?category=home#details"]) assert.equal(safeReturnTo(value), value);
   assert.equal(safeReturnTo("/products?q=杯"), "/products?q=%E6%9D%AF");
+  assert.equal(safeReturnTo("/admin/stats"), "/admin/stats");
 });
 
 test("注册校验按 UTF-8 字节限制密码，不截断多字节密码", () => {

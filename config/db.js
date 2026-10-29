@@ -2,7 +2,7 @@ require("./environment");
 const mysql = require("mysql2/promise");
 const { readDatabaseConfig } = require("./database-config");
 
-const requiredTables = ["users", "categories", "products", "cart_items", "orders", "order_items", "payments", "sessions"];
+const requiredTables = ["users", "categories", "products", "cart_items", "orders", "order_items", "payments", "sessions", "order_emails"];
 let pool;
 
 function getPool() {

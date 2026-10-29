@@ -30,7 +30,7 @@ SQL 文件不指定库名。`db:init` 根据配置创建并选择数据库，再
 | `npm run mysql:start` | 启动本项目的便携 MySQL |
 | `npm run mysql:stop` | 正常关闭本项目的便携 MySQL |
 | `npm run mysql:status` | 查看本地端口是否响应 |
-| `npm run db:check` | 实际验证账号、连接和所需 8 张表 |
+| `npm run db:check` | 实际验证账号、连接和所需 9 张表 |
 
 程序、数据和日志在 `.local/`，凭据在 `.env`，两者已被 Git 忽略。`shopping_app` 只有项目运行库和测试库的 SELECT、INSERT、UPDATE、DELETE 权限；`shopping_setup` 用于初始化和停止本机实例，不是网站管理员。初始化不会创建默认网站用户。
 

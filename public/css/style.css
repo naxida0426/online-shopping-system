@@ -1782,6 +1782,38 @@ button,input {
   .order-list-amount { display: flex; align-items: center; justify-content: space-between; }
 }
 
+.payment-card { max-width:760px; margin:24px auto 0; }
+.payment-notice { margin:24px 0; padding:16px; border-radius:10px; background:#f3f4eb; color:#52634e; line-height:1.9; }
+.payment-actions { display:flex; flex-wrap:wrap; gap:12px; align-items:center; }
+.order-action-bar, .payment-record { margin-top:24px; }
+.order-filters { display:flex; flex-wrap:wrap; gap:16px; align-items:end; padding:22px; background:white; border:1px solid var(--line); border-radius:14px; }
+.order-filters>div:first-child { flex:1; min-width:180px; }
+.order-filters label { display:block; margin-bottom:8px; font-size:13px; }
+.order-filters .form-control, .order-filters .form-select { background-color:#fdfdfb; border-color:#dce1d7; min-height:43px; }
+.order-results { margin:20px 0; color:#697368; }
+.order-pagination { margin-top:28px; }
+.order-pagination .page-link { color:var(--green); }
+.order-pagination .active>.page-link { color:white; background:var(--green); border-color:var(--green); }
+.admin-nav { display:flex; gap:12px; flex-wrap:wrap; padding-bottom:24px; margin-bottom:24px; border-bottom:1px solid var(--line); }
+.admin-nav a { padding:8px 14px; border-radius:8px; background:#eef0e7; }
+.admin-nav a.active { background:var(--green); color:white; }
+.admin-table { margin-top:24px; background:white; padding:20px; border-radius:14px; }
+.admin-table table { min-width:650px; }
+.admin-table td { max-width:280px; overflow-wrap:anywhere; }
+.stats-metrics { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; margin-top:24px; }
+.stats-metrics strong { display:block; font-size:30px; color:var(--green); overflow-wrap:anywhere; }
+.stats-chart { height:320px; position:relative; }
+.admin-product-form { max-width:950px; }
+@media(max-width:767.98px) {
+ .order-filters { padding:18px; gap:12px; }
+ .order-filters>div { width:100%; }
+ .order-list-amount { flex-wrap:wrap; }
+ .order-list-amount .btn { font-size:12px; padding:8px 10px; }
+ .payment-card .payment-actions { flex-direction:column; align-items:stretch; }
+ .stats-metrics { grid-template-columns:minmax(0,1fr); }
+ .admin-table { padding:10px; }
+}
+
 @media(prefers-reduced-motion:reduce) {
   html {
     scroll-behavior:auto;
