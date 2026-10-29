@@ -1,0 +1,7 @@
+<%- include('../partials/header') %>
+<main id="main-content" class="container-xl order-page">
+  <div class="cart-heading"><div><span class="eyebrow">MY ORDERS</span><h1>我的订单</h1><p>最近 20 笔订单，点击查看收货信息和商品明细。</p></div><a href="/products" class="btn btn-outline-brand">继续选购</a></div>
+  <% if (!orders.length) { %><section class="empty-state cart-empty"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#bag"/></svg><h2>还没有订单</h2><p>先把喜欢的商品加入购物车，再填写收货信息提交订单。</p><a href="/cart" class="btn btn-brand">查看购物车</a></section>
+  <% } else { %><div class="order-list"><% orders.forEach(order => { %><article class="order-card order-list-item"><div><span class="eyebrow"><%= order.createdAt %></span><h2 class="order-number"><a href="/orders/<%= order.id %>"><%= order.orderNo %></a></h2><p><%= orderLabels[order.orderStatus] || '处理中' %> · <%= paymentLabels[order.paymentStatus] || '处理中' %></p></div><div class="order-list-amount"><strong>¥<%= order.total %></strong><a class="btn btn-outline-brand" href="/orders/<%= order.id %>">查看详情</a></div></article><% }) %></div><% } %>
+</main>
+<%- include('../partials/footer') %>

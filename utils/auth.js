@@ -4,7 +4,7 @@ function safeReturnTo(value) {
   if (typeof value !== "string" || value.length > 1000 || !value.startsWith("/") || /[\\\r\n]|%5c|%0[ad]/i.test(value)) return "/account";
   try {
     const url = new URL(value, "http://local.invalid");
-    if (url.origin !== "http://local.invalid" || !/^\/(?:account|cart|products(?:\/[1-9]\d*)?)?$/.test(url.pathname)) return "/account";
+    if (url.origin !== "http://local.invalid" || !/^\/(?:account|cart|checkout|orders(?:\/[1-9]\d*)?|products(?:\/[1-9]\d*)?)?$/.test(url.pathname)) return "/account";
     return `${url.pathname}${url.search}${url.hash}`;
   } catch { return "/account"; }
 }
@@ -22,7 +22,7 @@ function verifyCsrf(req, res, next) {
     return res.status(403).render("message", {
       title: "请重新打开表单", icon: "info", message: "表单已失效，请刷新后重试",
       description: "为保护你的账户，这次操作没有执行。请重新打开页面再提交。",
-      activePage: "", query: "", actionUrl: req.baseUrl.toLowerCase() === "/cart" ? "/cart" : req.path === "/register" ? "/register" : "/login", actionLabel: "重新打开表单"
+      activePage: "", query: "", actionUrl: req.baseUrl.toLowerCase() === "/cart" ? "/cart" : /^\/orders\/?$/i.test(req.path) ? "/checkout" : req.path === "/register" ? "/register" : "/login", actionLabel: "重新打开表单"
     });
   }
   next();

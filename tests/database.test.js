@@ -106,6 +106,9 @@ test("真实 MySQL：初始化、约束、参数化查询、HTTP 与跨进程持
     await t.test("购物车、库存校验与账号隔离", async subtest => {
       await require("./cart-integration")(subtest, { pool, base: `http://127.0.0.1:${server.address().port}` });
     });
+    await t.test("订单创建、事务回滚和并发库存", async subtest => {
+      await require("./order-integration")(subtest, { pool, base: `http://127.0.0.1:${server.address().port}` });
+    });
     await t.test("账户注册、登录与持久会话", async subtest => {
       await require("./auth-integration")(subtest, { pool, base: `http://127.0.0.1:${server.address().port}` });
     });

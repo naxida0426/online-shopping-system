@@ -20,7 +20,7 @@
           </article>
         <% }) %>
       </section>
-      <aside class="cart-summary" aria-labelledby="cart-summary-title"><span class="eyebrow">A LITTLE COLLECTION</span><h2 id="cart-summary-title">好物清单</h2><dl><div><dt>清单商品</dt><dd><%= cart.items.length %> 种 / <%= cart.quantity %> 件</dd></div><div><dt>计入合计</dt><dd><%= cart.validQuantity %> 件</dd></div></dl><% if (cart.unavailableCount) { %><p class="cart-warning"><%= cart.unavailableCount %> 种商品需调整，未计入合计。</p><% } %><div class="cart-total"><span>商品合计</span><strong>¥<%= cart.total %></strong></div><p class="cart-summary-note">按数据库当前价格计算。加入购物车不会预留库存，价格与库存可能变化。</p><button type="button" class="btn btn-brand w-100" disabled>结算功能即将开放</button><p class="cart-summary-note">当前支持保存和调整购物车，暂不支持下单与支付。</p></aside>
+      <aside class="cart-summary" aria-labelledby="cart-summary-title"><span class="eyebrow">A LITTLE COLLECTION</span><h2 id="cart-summary-title">好物清单</h2><dl><div><dt>清单商品</dt><dd><%= cart.items.length %> 种 / <%= cart.quantity %> 件</dd></div><div><dt>计入合计</dt><dd><%= cart.validQuantity %> 件</dd></div></dl><% if (cart.unavailableCount) { %><p class="cart-warning"><%= cart.unavailableCount %> 种商品需调整，未计入合计。</p><% } %><div class="cart-total"><span>商品合计</span><strong>¥<%= cart.total %></strong></div><p class="cart-summary-note">按数据库当前价格计算。加入购物车不会预留库存，价格与库存可能变化。</p><% if (cart.unavailableCount) { %><button type="button" class="btn btn-brand w-100" disabled>请先调整失效商品</button><% } else { %><a class="btn btn-brand w-100" href="/checkout">填写收货信息</a><% } %><p class="cart-summary-note">下单时重新核对整份清单并扣减库存。当前尚未开放支付。</p></aside>
     </div>
   <% } %>
 </main>

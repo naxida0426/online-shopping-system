@@ -7,6 +7,7 @@ const { readBrowseOptions, catalogUrl, productUrl } = require("./utils/catalog")
 const productRoutes = require("./routes/products");
 const authRoutes = require("./routes/auth");
 const cartRoutes = require("./routes/cart");
+const orderRoutes = require("./routes/orders");
 const { sessionMiddleware, closeSessionStore, validateSessionSecret } = require("./config/session");
 const { loadCurrentUser } = require("./middleware/auth");
 const app = express();
@@ -56,6 +57,7 @@ app.get("/", async (req, res, next) => {
 app.use("/products", productRoutes);
 
 app.use("/cart", cartRoutes);
+app.use(orderRoutes);
 
 app.use((req, res) => {
   res.status(404).render("message", { title: "页面未找到", icon: "search", message: "这页小美好，还没找到", description: "页面地址可能有误，返回首页继续逛逛吧。", activePage: "", query: "" });
@@ -63,6 +65,9 @@ app.use((req, res) => {
 
 app.use((error, req, res, next) => {
   if (res.headersSent) return next(error);
+  if (error.code === "AUTH_USER_INACTIVE") {
+    return res.status(403).render("message", { title: "账户不可用", icon: "info", message: "账户状态已变化", description: "请重新登录后再操作。", activePage: "", query: "", actionUrl: "/login", actionLabel: "重新登录" });
+  }
   if (error.type === "entity.too.large" || error.type === "parameters.too.many") {
     return res.status(413).render("message", { title: "表单内容过多", icon: "info", message: "表单内容过多", description: "请检查输入内容后重新提交。", activePage: "", query: "" });
   }

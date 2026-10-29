@@ -4,7 +4,7 @@
   </div>
   <span class="results-count">共 <%= pagination.total %> 件<% if (pagination.total) { %> · 展示 <%= pagination.start %>–<%= pagination.end %> 件<% } %></span>
 </div>
-<div class="demo-notice"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#info"/></svg><span>商品信息来自 MySQL；标注“示例商品”的记录仅供课程演示，当前暂不支持购买。</span></div>
+<div class="demo-notice"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#info"/></svg><span>商品信息来自 MySQL；标注“示例商品”的记录仅供课程演示，可保存购物车并创建演示订单，当前不涉及真实交易。</span></div>
 <% if (invalidCategory) { %><p class="catalog-hint" role="status">分类不存在或已停用，已切换到全部分类。</p><% } %>
 <% if (query || category !== 'all') { %>
   <div class="filter-summary">

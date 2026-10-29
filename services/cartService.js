@@ -1,6 +1,7 @@
 const { getPool } = require("../config/db");
 const { isValidProductId } = require("../utils/catalog");
 const { toCents, formatCents } = require("../utils/money");
+const { withUserTransaction } = require("../config/transaction");
 
 class CartError extends Error {
   constructor(message, status = 422) { super(message); this.status = status; }
@@ -52,24 +53,11 @@ async function getCart(userId) {
   return { items, quantity, validQuantity, total: formatCents(total), unavailableCount: items.filter(item => !item.available).length };
 }
 
-async function inTransaction(work) {
-  const connection = await getPool().getConnection();
-  try {
-    await connection.beginTransaction();
-    const result = await work(connection);
-    await connection.commit();
-    return result;
-  } catch (error) {
-    await connection.rollback();
-    throw error;
-  } finally { connection.release(); }
-}
-
 async function lockProduct(connection, id) {
   // 总是先锁商品、再锁购物车条目，防止并发加入时覆盖数量或突破库存上限。
   const [rows] = await connection.execute(
     `SELECT p.stock, p.status, p.deleted_at, c.is_active FROM products p
-     JOIN categories c ON c.id = p.category_id WHERE p.id = ? FOR UPDATE`, [id]
+     JOIN categories c ON c.id = p.category_id WHERE p.id = ? FOR UPDATE OF p FOR SHARE OF c`, [id]
   );
   if (!rows.length) throw new CartError("商品不存在或暂时无法加入购物车。", 404);
   return rows[0];
@@ -84,7 +72,7 @@ function checkQuantity(product, quantity) {
 async function addItem(userId, productValue, quantityValue) {
   const productId = readId(productValue);
   const quantity = readQuantity(quantityValue);
-  return inTransaction(async connection => {
+  return withUserTransaction(userId, async connection => {
     const product = await lockProduct(connection, productId);
     const [rows] = await connection.execute("SELECT id, quantity FROM cart_items WHERE user_id = ? AND product_id = ? FOR UPDATE", [userId, productId]);
     const nextQuantity = (rows[0]?.quantity || 0) + quantity;
@@ -100,7 +88,7 @@ async function addItem(userId, productValue, quantityValue) {
 async function updateItem(userId, itemValue, quantityValue) {
   const itemId = readId(itemValue);
   const quantity = readQuantity(quantityValue);
-  return inTransaction(async connection => {
+  return withUserTransaction(userId, async connection => {
     const [existing] = await connection.execute("SELECT product_id FROM cart_items WHERE id = ? AND user_id = ?", [itemId, userId]);
     if (!existing.length) throw new CartError("购物车条目不存在，或已经被移除。", 404);
     const product = await lockProduct(connection, existing[0].product_id);
@@ -113,8 +101,10 @@ async function updateItem(userId, itemValue, quantityValue) {
 
 async function removeItem(userId, itemValue) {
   const itemId = readId(itemValue);
-  const [result] = await getPool().execute("DELETE FROM cart_items WHERE id = ? AND user_id = ?", [itemId, userId]);
-  if (!result.affectedRows) throw new CartError("购物车条目不存在，或已经被移除。", 404);
+  return withUserTransaction(userId, async connection => {
+    const [result] = await connection.execute("DELETE FROM cart_items WHERE id = ? AND user_id = ?", [itemId, userId]);
+    if (!result.affectedRows) throw new CartError("购物车条目不存在，或已经被移除。", 404);
+  });
 }
 
-module.exports = { getCart, addItem, updateItem, removeItem, CartError, readQuantity };
+module.exports = { getCart, addItem, updateItem, removeItem, CartError, readQuantity, unavailableReason };
