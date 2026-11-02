@@ -147,6 +147,40 @@ module.exports=async function verifyBusiness(t,{pool,base}){
   await t.test('管理员角色撤销后现有会话立即失去后台权限',async()=>{
    try{await pool.execute("UPDATE users SET role='customer' WHERE id=?",[adminId]);assert.equal((await staff.request('/admin/stats')).status,403);await assert.rejects(admin.listProducts(adminId),{status:403});}finally{await pool.execute("UPDATE users SET role='admin' WHERE id=?",[adminId]);}
   });
+  await t.test('关键路由与 EJS 在游客、顾客、管理员及空数据场景正常渲染',async()=>{
+   const guest=await createClient(base);
+   const pages=[
+    [guest,'/',200],[guest,'/products?q=NO_MATCH_AUDIT',200],[guest,'/login',200],[guest,'/register',200],
+    [alice,'/account',200],[alice,'/cart',200],[alice,'/checkout',200],[alice,'/orders?status=invalid',200],
+    [alice,`/orders/${paidId}`,200],[alice,`/orders/${paidId}/pay`,303],[alice,'/orders/4294967295',404],
+    [staff,'/admin/products/new',200],[staff,`/admin/products/${products[1]}/edit`,200],[staff,`/admin/products/${products[1]}/delete`,200],
+    [staff,'/admin/products?q=NO_MATCH_AUDIT',200],[staff,'/admin/orders?q=NO_MATCH_AUDIT',200],[staff,`/admin/orders/${paidId}`,200],
+    [staff,'/admin/stats?start=2090-01-01&end=2090-01-01',200],
+    [alice,'/ADMIN/PRODUCTS',403],[guest,'/admin/stats/data',303]
+   ];
+   for(const [client,path,status]of pages){const response=await client.request(path);assert.equal(response.status,status,path);assert.ok(!/ReferenceError|Failed to lookup view|SyntaxError/.test(response.body),path);}
+   for(const path of [`/admin/products/${products[1]}`,`/admin/products/${products[1]}/delete`,`/admin/orders/${paidId}/status`]){
+    assert.equal((await staff.request(path,{confirmDelete:'yes',nextStatus:'completed'})).status,403,path);
+    assert.equal((await alice.post(path,{})).status,403,path);
+   }
+  });
+  await t.test('异常数据库消息不进入响应或日志',async()=>{
+   const execute=pool.execute,log=console.error,logs=[];
+   const secret='AUDIT_PRIVATE_DB_DETAIL',sqlMarker='AUDIT_PRIVATE_SQL';
+   pool.execute=async function(sql,params){if(sql.startsWith('SELECT COUNT(*) AS total FROM products')){const error=new Error(secret);error.code='ER_PARSE_ERROR';error.sql=sqlMarker;throw error;}return execute.call(pool,sql,params);};
+   console.error=(...args)=>logs.push(args.join(' '));
+   try{const response=await alice.request('/products');assert.equal(response.status,503);for(const value of [secret,sqlMarker,process.cwd()]){assert.ok(!response.body.includes(value));assert.ok(!logs.join('\n').includes(value));}assert.ok(logs.length);}
+   finally{pool.execute=execute;console.error=log;}
+  });
+  await t.test('历史异常邮箱在发送前被拒绝，不调用邮件传输',async()=>{
+   const id=await makeOrder(users[1],[[1,1]]);await simulatePayment(users[1],id,'success');
+   const [[user]]=await pool.execute('SELECT email FROM users WHERE id=?',[users[1]]);let calls=0;
+   try{
+    await pool.execute('UPDATE users SET email=? WHERE id=?',[`Name<${user.email}>`,users[1]]);
+    assert.equal(await deliverOrderEmail(users[1],id,{env:{},transport:{sendMail:async()=>{calls++;}}}),'failed');assert.equal(calls,0);
+    const [[state]]=await pool.execute('SELECT last_error,attempts FROM order_emails WHERE order_id=?',[id]);assert.equal(state.last_error,'RECIPIENT_INVALID');assert.equal(state.attempts,0);assert.equal((await getOwnOrder(users[1],id)).paymentStatus,'paid');
+   }finally{await pool.execute('UPDATE users SET email=? WHERE id=?',[user.email,users[1]]);}
+  });
  }finally{
   for(const id of sessions)await pool.execute('DELETE FROM sessions WHERE session_id=?',[id]);
   for(const id of users){await pool.execute('DELETE FROM payments WHERE order_id IN (SELECT id FROM orders WHERE user_id=?)',[id]);await pool.execute('DELETE FROM order_items WHERE order_id IN (SELECT id FROM orders WHERE user_id=?)',[id]);await pool.execute('DELETE FROM orders WHERE user_id=?',[id]);await pool.execute('DELETE FROM cart_items WHERE user_id=?',[id]);await pool.execute('DELETE FROM users WHERE id=?',[id]);}

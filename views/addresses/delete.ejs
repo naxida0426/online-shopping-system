@@ -1,0 +1,8 @@
+<%- include('../partials/header') %>
+<main id="main-content" class="container-xl order-page">
+  <div class="cart-heading"><h1>删除收货地址</h1><a class="btn btn-outline-brand" href="/account/addresses">返回地址簿</a></div>
+  <section class="order-card address-form"><h2>确认删除这个地址？</h2><p><%= address.recipientName %> · <%= address.recipientPhone %></p><p class="address-text"><%= address.recipientAddress %></p><p>删除后不会影响历史订单。若删除默认地址，系统会将剩余地址中最新添加的一条设为默认。</p>
+    <form method="post" action="/account/addresses/<%= address.id %>/delete"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="confirmDelete" value="yes"><button type="submit" class="btn btn-brand">确认删除</button></form>
+  </section>
+</main>
+<%- include('../partials/footer') %>

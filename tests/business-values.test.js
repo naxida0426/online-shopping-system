@@ -18,6 +18,7 @@ test('邮件配置默认关闭，不接收非法发信地址或宽松 TLS 配置
  assert.throws(()=>smtpOptions({MAIL_ENABLED:'true',SMTP_HOST:'smtp.example.invalid',SMTP_PORT:'587'}));
  const o=smtpOptions({MAIL_ENABLED:'true',SMTP_HOST:'smtp.example.invalid',SMTP_PORT:'587',SMTP_USER:'test',SMTP_PASSWORD:'private',SMTP_FROM:'test@example.invalid'});
  assert.equal(o.requireTLS,true);assert.equal(o.disableUrlAccess,true);
+ for(const SMTP_FROM of ['Name<test@example.invalid>','test@example.invalid,','test@-example.invalid'])assert.throws(()=>smtpOptions({MAIL_ENABLED:'true',SMTP_HOST:'smtp.example.invalid',SMTP_PORT:'465',SMTP_USER:'test',SMTP_PASSWORD:'private',SMTP_FROM}));
  const m=confirmationMessage({id:1,order_no:'SG1',total_amount:'12.34',email:'to@example.invalid'},[{product_name:'台灯',quantity:1,subtotal:'12.34'}],'test@example.invalid');
  assert.ok(m.subject.includes('模拟支付'));assert.ok(m.text.includes('未发生真实资金扣款'));assert.ok(!m.text.includes('private'));
 });

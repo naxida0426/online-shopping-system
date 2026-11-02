@@ -1,12 +1,12 @@
 const nodemailer = require("nodemailer");
 const { getPool } = require("../config/db");
+const { isValidEmail } = require("../utils/email");
 
 function smtpOptions(env = process.env) {
   if (env.MAIL_ENABLED !== "true") return null;
-  const validEmail = value => typeof value === "string" && /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(value);
   const port = Number(env.SMTP_PORT), secure = env.SMTP_SECURE === "true";
   if (!/^[a-zA-Z0-9.-]+$/.test(env.SMTP_HOST || "") || !Number.isInteger(port) || port < 1 || port > 65535 ||
-      !env.SMTP_USER || !env.SMTP_PASSWORD || !validEmail(env.SMTP_FROM) || /[\r\n]/.test(env.SMTP_USER)) throw new Error("SMTP_CONFIG_INVALID");
+      !env.SMTP_USER || !env.SMTP_PASSWORD || !isValidEmail(env.SMTP_FROM) || /[\r\n]/.test(env.SMTP_USER)) throw new Error("SMTP_CONFIG_INVALID");
   return { host: env.SMTP_HOST, port, secure, requireTLS: !secure, auth: { user: env.SMTP_USER, pass: env.SMTP_PASSWORD },
     connectionTimeout: 5000, greetingTimeout: 5000, socketTimeout: 8000, disableFileAccess: true, disableUrlAccess: true };
 }
@@ -26,6 +26,11 @@ async function deliverOrderEmail(userId, orderId, { transport, env = process.env
     WHERE o.id = ? AND o.user_id = ? AND o.payment_status = 'paid' AND o.order_status <> 'cancelled' AND u.status = 'active'`, [orderId, userId]);
   if (!order) return "unavailable";
   if (order.status === "sent") return "sent";
+  // 兼容旧数据：历史账号可能在收紧校验前保存了非普通地址，禁止发信。
+  if (!isValidEmail(order.email)) {
+    await pool.execute("UPDATE order_emails SET status = 'failed', last_error = 'RECIPIENT_INVALID' WHERE order_id = ? AND status NOT IN ('sent','sending')", [orderId]);
+    return "failed";
+  }
   let options;
   try { options = smtpOptions(env); } catch {
     await pool.execute("UPDATE order_emails SET status = 'failed', last_error = 'SMTP_CONFIG_INVALID' WHERE order_id = ? AND status <> 'sent' AND status <> 'sending'", [orderId]);

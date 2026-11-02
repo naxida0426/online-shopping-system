@@ -1,0 +1,19 @@
+<%- include('../partials/header') %>
+<main id="main-content" class="container-xl order-page">
+  <nav class="shop-breadcrumb" aria-label="位置"><a href="/account">我的账户</a><span aria-hidden="true">/</span><span aria-current="page">收货地址簿</span></nav>
+  <div class="cart-heading"><div><span class="eyebrow">ADDRESS BOOK</span><h1>收货地址簿</h1><p>保存常用地址，结算更从容。已保存 <%= addresses.length %> / 20 个。</p></div><a class="btn btn-brand" href="/account/addresses/new">新增地址</a></div>
+  <p class="cart-summary-note">课程演示请使用虚构信息。默认地址会自动填入结算页；修改或删除地址不会影响历史订单。</p>
+  <% if (!addresses.length) { %><section class="order-card"><h2>还没有保存收货地址</h2><p>添加第一个地址后，会自动将它设为默认地址。</p><a href="/account/addresses/new" class="btn btn-outline-brand">添加收货地址</a></section><% } %>
+  <div class="address-grid"><% addresses.forEach(address => { %>
+    <section class="order-card address-card" aria-label="<%= address.recipientName %>的收货地址">
+      <div class="address-card-heading"><h2><%= address.recipientName %></h2><% if (address.isDefault) { %><span class="address-default">默认地址</span><% } %></div>
+      <p><%= address.recipientPhone %></p><p class="address-text"><%= address.recipientAddress %></p>
+      <div class="payment-actions"><a class="btn btn-outline-brand" href="/account/addresses/<%= address.id %>/edit">编辑</a>
+        <% if (!address.isDefault) { %><form method="post" action="/account/addresses/<%= address.id %>/default"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-outline-brand" type="submit">设为默认</button></form><% } %>
+        <a class="btn btn-outline-brand" href="/account/addresses/<%= address.id %>/delete">删除</a>
+      </div>
+    </section>
+  <% }) %></div>
+  <a href="/checkout" class="btn btn-outline-brand mt-4">前往结算</a>
+</main>
+<%- include('../partials/footer') %>

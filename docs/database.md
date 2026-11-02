@@ -18,7 +18,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON online_shopping.* TO 'shopping_app'@'127
 
 测试需要单独的数据库，例如 `online_shopping_test`。在 `.env` 中设置 `DB_TEST_NAME`，为初始化账号授予该库建表权限，为运行账号授予该库读写权限。测试会检查库名以 `_test` 结尾并拒绝使用运行库。
 
-SQL 文件不指定库名。`db:init` 根据配置创建并选择数据库，再执行 `sql/init.sql`；也可在客户端先选中数据库再执行 SQL。种子数据使用事务，但 MySQL 建表语句会隐式提交，初始化失败后可以修复原因再重试。
+SQL 文件不指定库名。`db:init` 根据配置创建并选择数据库，再执行 `sql/init.sql`；新库也可在客户端先选中数据库再执行 SQL。已有库升级须运行 `npm run db:init`，该命令还会执行 `scripts/migrate-bonus.js`，为订单表补齐截止时间、关闭原因和超时索引，初始化账号需有 ALTER 权限。种子数据使用事务，但 MySQL 建表语句会隐式提交，初始化失败后可以修复原因再重试。
 
 ## Windows 便携环境
 
@@ -30,7 +30,7 @@ SQL 文件不指定库名。`db:init` 根据配置创建并选择数据库，再
 | `npm run mysql:start` | 启动本项目的便携 MySQL |
 | `npm run mysql:stop` | 正常关闭本项目的便携 MySQL |
 | `npm run mysql:status` | 查看本地端口是否响应 |
-| `npm run db:check` | 实际验证账号、连接和所需 9 张表 |
+| `npm run db:check` | 实际验证账号、连接和所需 10 张表及订单新增字段 |
 
 程序、数据和日志在 `.local/`，凭据在 `.env`，两者已被 Git 忽略。`shopping_app` 只有项目运行库和测试库的 SELECT、INSERT、UPDATE、DELETE 权限；`shopping_setup` 用于初始化和停止本机实例，不是网站管理员。初始化不会创建默认网站用户。
 

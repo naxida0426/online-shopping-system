@@ -8,9 +8,9 @@ const { isValidProductId } = require("../utils/catalog");
 const { readOrderOptions, orderPagination } = require("../utils/orders");
 const MAX_ORDER_CENTS = 999999999999n; // orders.total_amount DECIMAL(12,2)
 
-class OrderError extends Error {
-  constructor(message, status = 409) { super(message); this.status = status; }
-}
+const { OrderError } = require("../utils/order-error");
+const { paymentTimeoutSeconds } = require("../config/orders");
+const { expireOrders } = require("./orderExpiryService");
 
 async function createOrder(userId, token, draft, shipping) {
   if (!validCheckoutToken(token)) throw new OrderError("结算表单已失效，请重新核对购物车。");
@@ -42,8 +42,8 @@ async function createOrder(userId, token, draft, shipping) {
     if (cartFingerprint(lines) !== draft.fingerprint) throw new OrderError("商品价格或购物车已变化，请核对本页后再次提交。");
     const orderNo = `SG${randomUUID().replaceAll("-", "").slice(0, 30)}`;
     const [order] = await connection.execute(
-      `INSERT INTO orders (order_no, user_id, checkout_token, total_amount, recipient_name, recipient_phone, recipient_address)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`, [orderNo, userId, token, formatCents(total), values.recipientName, values.recipientPhone, values.recipientAddress]
+      `INSERT INTO orders (order_no, user_id, checkout_token, total_amount, recipient_name, recipient_phone, recipient_address, expires_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, DATE_ADD(CURRENT_TIMESTAMP, INTERVAL ? SECOND))`, [orderNo, userId, token, formatCents(total), values.recipientName, values.recipientPhone, values.recipientAddress, paymentTimeoutSeconds()]
     );
     for (const line of lines) {
       const [stock] = await connection.execute("UPDATE products SET stock = stock - ? WHERE id = ? AND stock >= ? AND status = 'active' AND deleted_at IS NULL", [line.quantity, line.productId, line.quantity]);
@@ -59,9 +59,12 @@ async function createOrder(userId, token, draft, shipping) {
 }
 
 const orderColumns = `o.id, o.order_no AS orderNo, o.total_amount AS total, o.order_status AS orderStatus,
-  o.payment_status AS paymentStatus, o.created_at AS createdAt, o.paid_at AS paidAt, o.cancelled_at AS cancelledAt`;
+  o.payment_status AS paymentStatus, o.created_at AS createdAt, o.paid_at AS paidAt, o.cancelled_at AS cancelledAt,
+  o.expires_at AS expiresAt, o.cancel_reason AS cancelReason,
+  GREATEST(0, TIMESTAMPDIFF(SECOND, CURRENT_TIMESTAMP, o.expires_at)) AS remainingSeconds`;
 
 async function getOrders(userId, input = {}) {
+  await expireOrders({ userId });
   const options = readOrderOptions(input), conditions = ["o.user_id = ?"], params = [userId];
   const filters = { unpaid: "o.order_status = 'pending' AND o.payment_status = 'unpaid'", paid: "o.payment_status = 'paid' AND o.order_status <> 'cancelled'", cancelled: "o.order_status = 'cancelled'" };
   if (filters[options.status]) conditions.push(filters[options.status]);
@@ -75,6 +78,7 @@ async function getOrders(userId, input = {}) {
 
 async function getOwnOrder(userId, id) {
   if (!["string", "number"].includes(typeof id) || !isValidProductId(id)) return null;
+  await expireOrders({ userId, orderId: Number(id) });
   const [[order]] = await getPool().execute(
     `SELECT ${orderColumns}, o.recipient_name AS recipientName, o.recipient_phone AS recipientPhone,
      o.recipient_address AS recipientAddress, p.payment_no AS paymentNo, p.amount AS paymentAmount,

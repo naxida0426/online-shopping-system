@@ -8,6 +8,16 @@
   <form action="/orders" method="post" class="checkout-layout">
     <input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="checkoutToken" value="<%= token %>">
     <section class="order-card" aria-labelledby="shipping-title"><span class="eyebrow">DELIVERY DETAILS</span><h2 id="shipping-title">收货信息</h2>
+      <div class="mb-4"><label for="saved-address" class="form-label">选择已保存地址</label>
+        <select id="saved-address" class="form-select" aria-describedby="saved-address-help">
+          <option value="">临时填写新地址</option>
+          <% addresses.forEach(address => { const selected = address.recipientName === values.recipientName && address.recipientPhone === values.recipientPhone && address.recipientAddress === values.recipientAddress; %>
+          <option value="<%= address.id %>" data-name="<%= address.recipientName %>" data-phone="<%= address.recipientPhone %>" data-address="<%= address.recipientAddress %>" <%= selected ? 'selected' : '' %>><%= address.isDefault ? '默认 · ' : '' %><%= address.recipientName %> · <%= address.recipientPhone %> · <%= address.recipientAddress %></option>
+          <% }) %>
+        </select>
+        <div id="saved-address-help" class="form-text">选择后可临时修改，下单只保存本次填写的信息。<a href="/account/addresses">管理地址簿</a></div>
+        <noscript><p>也可点击地址填入：<% addresses.forEach(address => { %><a class="me-3" href="/checkout?address=<%= address.id %>"><%= address.recipientName %>（<%= address.recipientPhone %>）</a><% }) %></p></noscript>
+      </div>
       <div class="mb-4"><label for="recipient-name" class="form-label">收货人</label><input id="recipient-name" name="recipientName" class="form-control" required maxlength="80" autocomplete="shipping name" value="<%= values.recipientName || '' %>" placeholder="填写演示收货人"></div>
       <div class="mb-4"><label for="recipient-phone" class="form-label">手机号码</label><input id="recipient-phone" name="recipientPhone" class="form-control" type="tel" inputmode="numeric" pattern="1[3-9][0-9]{9}" required maxlength="11" autocomplete="shipping tel" value="<%= values.recipientPhone || '' %>" aria-describedby="phone-help"><div id="phone-help" class="form-text">11 位中国大陆手机号，演示时请使用虚构号码。</div></div>
       <div class="mb-2"><label for="recipient-address" class="form-label">详细地址</label><textarea id="recipient-address" name="recipientAddress" class="form-control" required minlength="5" maxlength="500" rows="4" autocomplete="shipping street-address" placeholder="省、市、区及详细地址（演示信息）"><%= values.recipientAddress || '' %></textarea></div>
@@ -19,4 +29,5 @@
     </section>
   </form>
 </main>
+<script src="/js/checkout-addresses.js" defer></script>
 <%- include('../partials/footer') %>

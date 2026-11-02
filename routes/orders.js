@@ -9,6 +9,7 @@ const { shippingInput, cartFingerprint } = require("../utils/checkout");
 const { toCents } = require("../utils/money");
 const { requireAuth } = require("../middleware/auth");
 const { verifyCsrf, sessionAction } = require("../utils/auth");
+const { listAddresses, getAddress } = require("../services/addressService");
 const router = express.Router();
 
 router.use(["/checkout", "/orders"], requireAuth);
@@ -34,12 +35,25 @@ async function renderCheckout(req, res, { status = 200, errors = [], values = {}
     token = req.session.checkoutDraft.token;
     await sessionAction(req, "save");
   }
+  const addresses = await listAddresses(req.user.id);
+  if (req.method === "GET") {
+    if (req.query.address !== undefined) {
+      try { values = await getAddress(req.user.id, req.query.address); }
+      catch (error) { if (error.status === 404) throw new OrderError(error.message, 404); throw error; }
+    } else values = addresses.find(address => address.isDefault) || {};
+  }
   res.status(status).render("orders/checkout", {
-    title: "确认订单 · 拾光商城", activePage: "orders", query: "", cart, token, blocked, errors, values
+    title: "确认订单 · 拾光商城", activePage: "orders", query: "", cart, token, blocked, errors, values, addresses
   });
 }
 
-router.get("/checkout", (req, res) => renderCheckout(req, res));
+router.get("/checkout", async (req, res, next) => {
+  try { await renderCheckout(req, res); }
+  catch (error) {
+    if (!(error instanceof OrderError)) return next(error);
+    res.status(error.status).render("message", { title: "地址不可用", icon: "info", message: "地址不可用", description: error.message, activePage: "orders", query: "", actionUrl: "/checkout", actionLabel: "返回结算" });
+  }
+});
 router.get("/orders", async (req, res) => {
   const history = await getOrders(req.user.id, req.query);
   res.render("orders/index", { title: "我的订单 · 拾光商城", activePage: "orders", query: "", orders: history.orders, pagination: history.pagination, browse: history });
@@ -60,7 +74,7 @@ async function renderOrder(req, res, { status = 200, errorMessage = "", view = "
 router.get("/orders/:id", (req, res) => renderOrder(req, res));
 router.get("/orders/:id/pay", (req, res) => renderOrder(req, res, { view: "pay" }));
 router.get("/orders/:id/cancel", (req, res) => renderOrder(req, res, { view: "cancel" }));
-const notices = { paid: "模拟支付成功，未发生真实扣款。", already_paid: "此前已完成模拟支付，未重复处理。", payment_cancelled: "已取消本次支付，订单仍待支付；取消订单才会恢复库存。", order_cancelled: "订单已取消，库存已恢复。", already_cancelled: "此前已取消，未重复恢复库存。" };
+const notices = { order_expired: "订单已超时自动关闭，库存已恢复，请重新下单。", paid: "模拟支付成功，未发生真实扣款。", already_paid: "此前已完成模拟支付，未重复处理。", payment_cancelled: "已取消本次支付，订单仍待支付；取消订单才会恢复库存。", order_cancelled: "订单已取消，库存已恢复。", already_cancelled: "此前已取消，未重复恢复库存。" };
 function orderAction(work, sendEmail = false) {
   return async (req, res, next) => {
     try {

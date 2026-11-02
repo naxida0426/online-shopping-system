@@ -17,6 +17,21 @@ CREATE TABLE IF NOT EXISTS users (
   UNIQUE KEY uq_users_email (email)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+CREATE TABLE IF NOT EXISTS addresses (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id INT UNSIGNED NOT NULL,
+  recipient_name VARCHAR(80) NOT NULL,
+  recipient_phone VARCHAR(30) NOT NULL,
+  recipient_address VARCHAR(500) NOT NULL,
+  is_default BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_addresses_user (user_id, is_default),
+  CONSTRAINT fk_addresses_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT chk_addresses_default CHECK (is_default IN (0, 1))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 CREATE TABLE IF NOT EXISTS categories (
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,
   slug VARCHAR(50) NOT NULL,
@@ -85,11 +100,14 @@ CREATE TABLE IF NOT EXISTS orders (
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   paid_at DATETIME NULL,
   cancelled_at DATETIME NULL,
+  expires_at DATETIME NULL,
+  cancel_reason VARCHAR(20) NULL,
   PRIMARY KEY (id),
   UNIQUE KEY uq_orders_no (order_no),
   UNIQUE KEY uq_orders_checkout (user_id, checkout_token),
   KEY idx_orders_user_created (user_id, created_at),
   KEY idx_orders_payment_created (payment_status, created_at),
+  KEY idx_orders_expiry (order_status, payment_status, expires_at),
   CONSTRAINT fk_orders_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
   CONSTRAINT chk_orders_total CHECK (total_amount >= 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

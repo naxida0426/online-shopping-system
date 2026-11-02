@@ -46,6 +46,7 @@ app.get("/health/db", async (req, res) => {
 app.use(sessionMiddleware);
 app.use(loadCurrentUser);
 app.use(authRoutes);
+app.use("/account/addresses", require("./routes/addresses"));
 
 app.get("/", async (req, res, next) => {
   const options = readBrowseOptions(req.query);
@@ -75,6 +76,12 @@ app.use((error, req, res, next) => {
   if (error.type === "entity.too.large" || error.type === "parameters.too.many") {
     return res.status(413).render("message", { title: "表单内容过多", icon: "info", message: "表单内容过多", description: "请检查输入内容后重新提交。", activePage: "", query: "" });
   }
+  if (["charset.unsupported", "encoding.unsupported"].includes(error.type)) {
+    return res.status(415).render("message", { title: "表单编码不支持", icon: "info", message: "表单编码不支持", description: "请使用网站表单重新提交，不要更改请求的字符编码或压缩方式。", activePage: "", query: "" });
+  }
+  if (["entity.parse.failed", "request.aborted", "request.size.invalid"].includes(error.type)) {
+    return res.status(400).render("message", { title: "表单内容有误", icon: "info", message: "表单内容有误", description: "请求内容不完整或格式有误，请重新打开页面后提交。", activePage: "", query: "" });
+  }
   if (error.code === "SESSION_CONFIG_INVALID") {
     return res.status(503).render("message", { title: "账户服务未配置", icon: "info", message: "账户服务暂不可用", description: error.message, activePage: "", query: "" });
   }
@@ -98,6 +105,8 @@ app.use((error, req, res, next) => {
 if (require.main === module) {
   try { validateSessionSecret(); }
   catch (error) { console.error(error.message); process.exit(1); }
+  require("./config/orders").paymentTimeoutSeconds();
+  const stopExpiry = require("./services/orderExpiryService").startOrderExpiryWorker();
   const port = process.env.PORT || 3000;
   const server = app.listen(port, () => {
     console.log(`商城运行在 http://localhost:${port}`);
@@ -105,7 +114,7 @@ if (require.main === module) {
       .catch(error => console.error(`数据库检查：${describeDatabaseError(error)}`));
   });
   const shutdown = () => {
-    server.close(() => closeSessionStore().then(closePool).then(() => process.exit(0)));
+    server.close(() => stopExpiry().then(closeSessionStore).then(closePool).then(() => process.exit(0)));
     setTimeout(() => process.exit(1), 10000).unref();
   };
   process.once("SIGINT", shutdown);

@@ -18,6 +18,7 @@ async function initializeDatabase() {
     // 本项目 SQL 仅包含普通建表/插入语句，无存储过程或含分号的字符串。
     const statements = source.replace(/^\s*--.*$/gm, "").split(";").map(sql => sql.trim()).filter(Boolean);
     for (const statement of statements) await connection.query(statement);
+    await require("./migrate-bonus").migrateBonus(connection);
     const [rows] = await connection.execute("SELECT COUNT(*) AS count FROM products WHERE is_demo = 1");
     console.log(`初始化完成：${requiredTables.length} 张业务表，当前有 ${rows[0].count} 件示例商品。`);
     console.log("重复执行不会覆盖已有商品的价格、库存或账号数据；不会创建默认管理员。");

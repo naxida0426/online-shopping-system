@@ -1,6 +1,7 @@
 const bcrypt = require("bcryptjs");
 const { randomBytes } = require("node:crypto");
 const { getPool } = require("../config/db");
+const { isValidEmail } = require("../utils/email");
 const rounds = 12;
 let dummyHash;
 
@@ -10,7 +11,7 @@ function registrationInput(body = {}) {
   const password = typeof body.password === "string" ? body.password : "";
   const errors = [];
   if (!/^[\p{Script=Han}a-zA-Z0-9_]{3,30}$/u.test(username)) errors.push("用户名须为 3–30 个中文、字母、数字或下划线。");
-  if (email.length > 191 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.push("请输入有效的邮箱地址（不超过 191 个字符）。");
+  if (!isValidEmail(email)) errors.push("请输入单个有效的普通邮箱地址（不超过 191 个字符）。");
   if (password.length < 8 || Buffer.byteLength(password, "utf8") > 72) errors.push("密码至少 8 个字符，且不超过 72 个 UTF-8 字节（中文通常占 3 字节）。");
   if (password !== body.confirmPassword) errors.push("两次输入的密码不一致。");
   return { username, email, password, errors };

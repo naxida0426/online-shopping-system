@@ -2,7 +2,7 @@ require("./environment");
 const mysql = require("mysql2/promise");
 const { readDatabaseConfig } = require("./database-config");
 
-const requiredTables = ["users", "categories", "products", "cart_items", "orders", "order_items", "payments", "sessions", "order_emails"];
+const requiredTables = ["users", "categories", "products", "cart_items", "orders", "order_items", "payments", "sessions", "order_emails", "addresses"];
 let pool;
 
 function getPool() {
@@ -30,6 +30,12 @@ async function checkDatabase() {
     const names = new Set(rows.map(row => row.name));
     if (requiredTables.some(name => !names.has(name))) {
       const error = new Error("数据库表尚未完整初始化。");
+      error.code = "DB_SCHEMA_MISSING";
+      throw error;
+    }
+    const [columns] = await connection.execute("SELECT COLUMN_NAME AS name FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'orders' AND COLUMN_NAME IN ('expires_at', 'cancel_reason')");
+    if (columns.length !== 2) {
+      const error = new Error("订单表需要升级。");
       error.code = "DB_SCHEMA_MISSING";
       throw error;
     }

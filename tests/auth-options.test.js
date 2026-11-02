@@ -38,3 +38,13 @@ test("拒绝空会话密钥、短密钥及示例占位值", () => {
     else process.env.SESSION_SECRET = previous;
   }
 });
+
+test("注册邮箱必须是单个普通地址，拒绝显示名、控制字符和异常域名", () => {
+  const values = { username: "顾客_test", password: "password-123", confirmPassword: "password-123" };
+  for (const email of ["test+course@example.invalid", "first.last@sub.example.invalid"]) {
+    assert.deepEqual(registrationInput({ ...values, email }).errors, []);
+  }
+  for (const email of ["显示名<test@example.invalid>", "test@example.invalid,", "a..b@example.invalid", ".test@example.invalid", "test@-example.invalid", "test@example..invalid", "test\u0000@example.invalid", ["test@example.invalid"]]) {
+    assert.ok(registrationInput({ ...values, email }).errors.length, "拒绝异常邮箱格式");
+  }
+});

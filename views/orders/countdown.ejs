@@ -1,0 +1,8 @@
+<% if (order.canPay && order.expiresAt) { %>
+<div class="alert alert-warning mt-3 order-countdown" data-order-countdown data-remaining="<%= order.remainingSeconds %>">
+  <strong>请在 <span data-countdown-text><%= Math.floor(order.remainingSeconds / 60) %> 分 <%= order.remainingSeconds % 60 %> 秒</span>内完成模拟支付</strong>
+  <p class="mb-0 mt-1">支付截止：<%= order.expiresAt %>。超时将自动关闭订单并恢复库存。</p>
+  <noscript><p class="mb-0">请以支付截止时间为准，刷新页面可查看最新状态。</p></noscript>
+</div>
+<script src="/js/order-countdown.js" defer></script>
+<% } %>

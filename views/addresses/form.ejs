@@ -1,0 +1,15 @@
+<%- include('../partials/header') %>
+<main id="main-content" class="container-xl order-page">
+  <div class="cart-heading"><div><span class="eyebrow">DELIVERY DETAILS</span><h1><%= id ? '编辑' : '新增' %>收货地址</h1><p>课程演示请使用虚构的收货人、手机号码与地址。</p></div><a class="btn btn-outline-brand" href="/account/addresses">返回地址簿</a></div>
+  <% if (errors.length) { %><div class="alert alert-danger" role="alert"><ul class="mb-0"><% errors.forEach(error => { %><li><%= error %></li><% }) %></ul></div><% } %>
+  <form method="post" action="/account/addresses<%= id ? '/' + id : '' %>" class="order-card address-form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="mb-4"><label for="recipient-name" class="form-label">收货人</label><input id="recipient-name" class="form-control" name="recipientName" required maxlength="80" autocomplete="shipping name" value="<%= values.recipientName || '' %>"></div>
+    <div class="mb-4"><label for="recipient-phone" class="form-label">手机号码</label><input id="recipient-phone" class="form-control" name="recipientPhone" type="tel" inputmode="numeric" required pattern="1[3-9][0-9]{9}" maxlength="11" autocomplete="shipping tel" value="<%= values.recipientPhone || '' %>"></div>
+    <div class="mb-4"><label for="recipient-address" class="form-label">详细地址</label><textarea id="recipient-address" class="form-control" name="recipientAddress" required minlength="5" maxlength="500" rows="4" autocomplete="shipping street-address"><%= values.recipientAddress || '' %></textarea></div>
+    <div class="form-check mb-4"><input id="is-default" class="form-check-input" type="checkbox" name="isDefault" value="yes" <%= values.isDefault ? 'checked' : '' %>><label for="is-default" class="form-check-label">设为默认地址</label></div>
+    <p class="cart-summary-note">第一个地址自动设为默认。已有默认地址可通过其他地址的“设为默认”按钮切换。</p>
+    <button type="submit" class="btn btn-brand">保存地址</button>
+  </form>
+</main>
+<%- include('../partials/footer') %>
