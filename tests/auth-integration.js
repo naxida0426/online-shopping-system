@@ -51,9 +51,24 @@ module.exports = async function authIntegration(t, { pool, base }) {
       guestCookie = cookie;
       assert.match(response.headers.get("set-cookie"), /HttpOnly/);
       assert.match(response.headers.get("set-cookie"), /SameSite=Lax/);
+      assert.doesNotMatch(response.headers.get("set-cookie"), /;\s*Secure(?:;|$)/i);
       assert.equal(response.headers.get("cache-control"), "no-store");
       assert.equal((await request("/LOGIN/")).status, 200);
       assert.equal((await request("/REGISTER/")).status, 200);
+    });
+    await t.test("HTTP 登录表单令牌存入同一 MySQL 会话，缺失或不同会话不能复用", async () => {
+      const page = await request("/login");
+      token = csrf(page.body);
+      const originalCookie = cookie;
+      const id = decodeURIComponent(cookie.split("=").slice(1).join("=")).slice(2).split(".")[0];
+      const [[stored]] = await pool.execute("SELECT data FROM sessions WHERE session_id = ?", [id]);
+      assert.equal(JSON.parse(stored.data).csrfToken, token);
+      assert.equal((await request("/login", { _csrf: token, identifier: username, password }, "")).status, 403);
+      const other = await request("/login", undefined, "");
+      assert.notEqual(cookie, originalCookie);
+      assert.notEqual(csrf(other.body), token);
+      assert.equal((await request("/login", { _csrf: token, identifier: username, password })).status, 403);
+      cookie = originalCookie;
     });
     await t.test("注册写入 MySQL、密码哈希且不能通过表单提升角色", async () => {
       const result = await request("/register", { _csrf: token, username, email: email.toUpperCase(), password, confirmPassword: password, role: "admin", next: "/cart" });
@@ -103,10 +118,12 @@ module.exports = async function authIntegration(t, { pool, base }) {
       assert.equal((await login(username, { password: "字".repeat(25) })).status, 422);
     });
     await t.test("登录更换会话编号，保留站内返回地址且能读取真实账户", async () => {
+      const guestToken = token;
       const result = await login(username, { next: "/cart" });
       assert.equal(result.status, 303);
       assert.equal(result.headers.get("location"), "/cart");
       assert.notEqual(cookie, guestCookie);
+      assert.doesNotMatch(result.headers.get("set-cookie"), /;\s*Secure(?:;|$)/i);
       signedInCookie = cookie;
       const account = await request("/account");
       assert.equal(account.status, 200);
@@ -114,6 +131,8 @@ module.exports = async function authIntegration(t, { pool, base }) {
       assert.ok(account.body.includes("顾客"));
       assert.ok(!account.body.includes(password));
       token = csrf(account.body);
+      assert.notEqual(token, guestToken);
+      assert.equal((await request("/logout", { _csrf: guestToken })).status, 403);
       assert.equal((await request("/cart")).status, 200);
       assert.equal((await request("/account", undefined, guestCookie)).status, 303);
       cookie = signedInCookie;

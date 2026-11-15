@@ -93,12 +93,13 @@ npm start
 | `DB_TEST_NAME` | 独立测试库，名称以 `_test` 结尾，且与运行库不同 |
 | `SESSION_SECRET` | 至少 32 字节的会话密钥，可用 `npm run session:setup` 生成 |
 | `NODE_ENV` | 本地使用 `development`，生产环境使用 `production` |
+| `SESSION_COOKIE_SECURE` | HTTP 部署使用 `false`（默认）；HTTPS 部署设置 `true` |
 | `TRUST_PROXY` | 默认 0；部署在受信任的一层反向代理后时设为 1 |
 | `BOOTSTRAP_ADMIN_*` | 首位管理员的用户名、邮箱和密码 |
 | `ORDER_PAYMENT_TIMEOUT_SECONDS` | 新订单支付期限，默认 1800 秒，范围 1–86400 |
 | `MAIL_ENABLED`、`SMTP_*` | 邮件开关和 SMTP 配置 |
 
-生产环境的会话 Cookie 使用 Secure，需要 HTTPS。环境变量修改后须重启网站。
+会话 Cookie 的 Secure 属性由 `SESSION_COOKIE_SECURE` 独立控制。公网 IP 的 HTTP 部署可保持 `NODE_ENV=production`，使用 `SESSION_COOKIE_SECURE=false`；切换 HTTPS 后设置为 `true`。HttpOnly、SameSite=Lax、CSRF 校验和登录限流保持启用。HTTP 不加密传输，正式处理真实账户及个人信息前应配置 HTTPS。环境变量修改后须重启网站，并重新打开登录页面获取表单。
 
 ## 使用说明
 

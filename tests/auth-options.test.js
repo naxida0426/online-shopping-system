@@ -2,7 +2,26 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const { safeReturnTo } = require("../utils/auth");
 const { registrationInput } = require("../services/userService");
-const { validateSessionSecret } = require("../config/session");
+const { validateSessionSecret, cookieOptions } = require("../config/session");
+
+test("production 的 HTTP 部署可使用会话，HTTPS 可显式启用 Secure", () => {
+  const previous = { NODE_ENV: process.env.NODE_ENV, SESSION_COOKIE_SECURE: process.env.SESSION_COOKIE_SECURE };
+  try {
+    process.env.NODE_ENV = "production";
+    delete process.env.SESSION_COOKIE_SECURE;
+    for (const value of [undefined, "false", "true"]) {
+      if (value === undefined) delete process.env.SESSION_COOKIE_SECURE;
+      else process.env.SESSION_COOKIE_SECURE = value;
+      assert.deepEqual(cookieOptions(), { httpOnly: true, sameSite: "lax", secure: value === "true", path: "/" });
+      assert.equal(process.env.NODE_ENV, "production");
+    }
+  } finally {
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
+});
 
 test("登录返回地址只允许本站已有页面，管理员权限由路由单独验证", () => {
   for (const value of ["https://evil.invalid", "//evil.invalid", "/\\evil.invalid", "/%5cevil.invalid", "/products%0d%0aX-Test:1", "/admin.evil", ["/cart"]]) {

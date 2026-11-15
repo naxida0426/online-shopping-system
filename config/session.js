@@ -3,7 +3,9 @@ const MySQLStore = require("express-mysql-session")(session);
 const { getPool } = require("./db");
 
 const cookieName = "shiguang.sid";
-const cookieOptions = () => ({ httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/" });
+// 当前支持公网 IP 的 HTTP 部署；切换 HTTPS 时显式设置 SESSION_COOKIE_SECURE=true。
+// Cookie 的传输要求独立于 NODE_ENV，避免 production + HTTP 丢失会话及 CSRF 关联。
+const cookieOptions = () => ({ httpOnly: true, sameSite: "lax", secure: process.env.SESSION_COOKIE_SECURE === "true", path: "/" });
 let store;
 let middleware;
 
