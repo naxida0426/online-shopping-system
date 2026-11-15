@@ -4,7 +4,7 @@ function safeReturnTo(value) {
   if (typeof value !== "string" || value.length > 1000 || !value.startsWith("/") || /[\\\r\n]|%5c|%0[ad]/i.test(value)) return "/account";
   try {
     const url = new URL(value, "http://local.invalid");
-    if (url.origin !== "http://local.invalid" || !/^\/(?:account|cart|checkout|orders(?:\/[1-9]\d*(?:\/(?:pay|cancel))?)?|products(?:\/[1-9]\d*)?|admin(?:\/[a-z0-9/-]*)?)?$/.test(url.pathname)) return "/account";
+    if (url.origin !== "http://local.invalid" || !/^\/(?:account(?:\/favorites)?|cart|checkout|orders(?:\/[1-9]\d*(?:\/(?:pay|cancel|receive))?)?|products(?:\/[1-9]\d*)?|admin(?:\/[a-z0-9/-]*)?)?$/.test(url.pathname)) return "/account";
     return `${url.pathname}${url.search}${url.hash}`;
   } catch { return "/account"; }
 }

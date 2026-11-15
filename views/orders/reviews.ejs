@@ -1,0 +1,18 @@
+<% if (o.reviewItems.length) { %><section class="order-reviews" aria-label="订单商品评价">
+  <h3>商品评价</h3>
+  <% o.reviewItems.forEach(item => { const feedback = reviewFeedback && reviewFeedback.orderId === o.id && reviewFeedback.itemId === item.id ? reviewFeedback : null; %>
+  <div class="order-review-item" id="review-item-<%= item.id %>">
+    <h4><%= item.name %> × <%= item.quantity %></h4>
+    <% if (reviewedItem === item.id) { %><p class="alert alert-success" role="status">评价已提交。</p><% } %>
+    <% if (item.reviewId) { %><p class="review-rating"><%= '★'.repeat(item.rating) %><%= '☆'.repeat(5 - item.rating) %> · 已评价</p><p class="review-content"><%= item.content %></p>
+    <% } else { %>
+      <% if (feedback) { %><p class="alert alert-danger" role="alert"><%= feedback.error %></p><% } %>
+      <form method="post" action="<%= reviewUrl(o.id, item.id, browse) %>">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <fieldset class="review-stars"><legend>评分</legend><% [1,2,3,4,5].forEach(rating => { %><label><input type="radio" name="rating" value="<%= rating %>" required <%= feedback?.values.rating === rating ? 'checked' : '' %>> <%= rating %> 星</label><% }) %></fieldset>
+        <label class="form-label" for="review-content-<%= item.id %>">评价内容</label><textarea class="form-control" id="review-content-<%= item.id %>" name="content" rows="3" required maxlength="1000" placeholder="说说使用感受"><%= feedback?.values.content || '' %></textarea>
+        <button type="submit" class="btn btn-brand mt-3">提交评价</button>
+      </form>
+    <% } %>
+  </div><% }) %>
+</section><% } %>

@@ -12,22 +12,32 @@
 </head>
 <body>
   <a class="skip-link" href="#main-content">跳到主要内容</a>
-  <div class="announcement"><div class="container-xl"><span>新学期，新生活。把喜欢带回日常。</span><span class="announcement-label">课程设计 · 学习演示</span></div></div>
   <header class="site-header">
     <nav class="navbar navbar-expand-lg container-xl" aria-label="主导航">
-      <a class="navbar-brand brand" href="/" aria-label="拾光商城首页"><span class="brand-mark"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#sun"/></svg></span><span><strong>拾光<span>商城</span></strong><small>SHIGUANG · EVERYDAY GOODS</small></span></a>
+      <a class="navbar-brand brand" href="/" aria-label="拾光商城首页"><span class="brand-mark"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#sun"/></svg></span><span><strong>拾光<span>商城</span></strong></span></a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#main-nav" aria-controls="main-nav" aria-expanded="false" aria-label="展开导航"><span class="navbar-toggler-icon"></span></button>
       <div class="collapse navbar-collapse" id="main-nav">
         <div class="navbar-nav main-nav"><a class="nav-link <%= activePage === 'home' ? 'active' : '' %>" href="/" <%- activePage === 'home' ? 'aria-current="page"' : '' %>>首页</a><a class="nav-link <%= activePage === 'products' ? 'active' : '' %>" href="/products" <%- activePage === 'products' ? 'aria-current="page"' : '' %>>发现好物</a></div>
-        <form class="search-form" action="/products#products" method="get" role="search" aria-label="全站商品搜索"><label class="visually-hidden" for="site-search">搜索商品</label><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#search"/></svg><input id="site-search" name="q" type="search" maxlength="100" placeholder="搜索你的心动好物" value="<%= query %>"><% if (typeof category !== 'undefined' && category !== 'all') { %><input type="hidden" name="category" value="<%= category %>"><% } %><button type="submit" aria-label="搜索">搜索</button></form>
+        <form class="search-form" action="/products" method="get" role="search" aria-label="全站商品搜索"><label class="visually-hidden" for="site-search">搜索商品</label><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#search"/></svg><input id="site-search" name="q" type="search" maxlength="100" placeholder="搜索你的心动好物" value="<%= query %>"><% if (typeof category !== 'undefined' && category !== 'all') { %><input type="hidden" name="category" value="<%= category %>"><% } %><button type="submit" aria-label="搜索">搜索</button></form>
         <div class="header-actions">
+          <% const count = typeof cartQuantity === 'number' ? cartQuantity : 0; %>
+          <a href="/cart" class="cart-link <%= activePage === 'cart' ? 'active' : '' %>" <%- activePage === 'cart' ? 'aria-current="page"' : '' %> aria-label="购物车，<%= count %> 件商品"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#bag"/></svg><span>购物车</span><span class="cart-count" aria-hidden="true"><%= count %></span></a>
           <% if (typeof currentUser !== 'undefined' && currentUser) { %>
-            <a href="/account" class="account-link <%= activePage === 'account' ? 'active' : '' %>"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#user"/></svg><span class="account-name"><%= currentUser.username %></span></a>
-            <form action="/logout" method="post" class="logout-form"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="logout-button">退出</button></form>
+            <div class="dropdown account-menu">
+              <button type="button" class="account-link account-toggle dropdown-toggle <%= activePage === 'account' ? 'active' : '' %>" data-bs-toggle="dropdown" aria-expanded="false" aria-label="用户账户：<%= currentUser.username %>"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#user"/></svg><span class="account-name"><%= currentUser.username %></span></button>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="/account">我的账户</a></li>
+                <li><a class="dropdown-item" href="/orders">我的订单</a></li>
+                <li><a class="dropdown-item" href="/account/addresses">收货地址簿</a></li>
+                <li><a class="dropdown-item" href="/account/favorites">我的收藏</a></li>
+                <% if (currentUser.role === 'admin') { %><li><a class="dropdown-item" href="/admin">管理后台</a></li><% } %>
+                <li><hr class="dropdown-divider"></li>
+                <li><form action="/logout" method="post"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="dropdown-item">退出登录</button></form></li>
+              </ul>
+            </div>
           <% } else { %>
             <a href="/login" class="account-link <%= activePage === 'login' ? 'active' : '' %>"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#user"/></svg>登录</a><span class="action-divider"></span><a href="/register" class="register-link">注册</a>
           <% } %>
-          <a href="/cart" class="cart-link <%= activePage === 'cart' ? 'active' : '' %>" <%- activePage === 'cart' ? 'aria-current="page"' : '' %> aria-label="购物车"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#bag"/></svg><span>购物车</span></a>
         </div>
       </div>
     </nav>

@@ -64,6 +64,24 @@ module.exports = async (t, { pool, base }) => {
       assert.ok(page.body.includes("修改后的收货人"));
       assert.equal(page.headers.get("cache-control"), "no-store");
     });
+    await t.test("地址簿按入口显示返回结算，并在编辑和默认操作后保留来源", async () => {
+      const normal = await alice.request("/account/addresses");
+      assert.ok(!normal.body.includes("返回结算"));
+      assert.ok(!normal.body.includes("前往结算"));
+      const fromCheckout = await alice.request("/account/addresses?from=checkout");
+      assert.ok(fromCheckout.body.includes('href="/checkout?from=addresses"'));
+      assert.ok(fromCheckout.body.includes(`/account/addresses/${firstAddress.id}/edit?from=checkout`));
+      const form = await alice.request(`/account/addresses/${firstAddress.id}/edit?from=checkout`);
+      assert.ok(form.body.includes(`action="/account/addresses/${firstAddress.id}?from=checkout"`));
+      const saved = await alice.post(`/account/addresses/${firstAddress.id}?from=checkout`, { ...shipping, isDefault: "yes" });
+      assert.equal(saved.status, 303);
+      assert.equal(saved.headers.get("location"), "/account/addresses?from=checkout");
+      const selected = await alice.post(`/account/addresses/${firstAddress.id}/default?from=checkout`);
+      assert.equal(selected.headers.get("location"), "/account/addresses?from=checkout");
+      const invalid = await alice.post(`/account/addresses/${firstAddress.id}?from=checkout`, { ...shipping, recipientPhone: "123" });
+      assert.equal(invalid.status, 422);
+      assert.ok(invalid.body.includes('href="/account/addresses?from=checkout"'));
+    });
     await t.test("另一账号不能查看、修改、删除或默认设置本人地址", async () => {
       for (const route of ["edit", "delete"]) assert.equal((await bob.request(`/account/addresses/${firstAddress.id}/${route}`)).status, 404);
       for (const route of ["", "/delete", "/default"]) assert.equal((await bob.post(`/account/addresses/${firstAddress.id}${route}`, { ...shipping, confirmDelete: "yes" })).status, 404);

@@ -31,6 +31,7 @@ app.locals.shopUrl = catalogUrl;
 app.locals.productUrl = productUrl;
 app.locals.year = new Date().getFullYear();
 app.locals.safeJson = value => JSON.stringify(value).replace(/</g, "\\u003c");
+app.locals.currentUrl = "/";
 app.locals.currentUser = null;
 app.locals.csrfToken = "";
 
@@ -45,13 +46,25 @@ app.get("/health/db", async (req, res) => {
 });
 app.use(sessionMiddleware);
 app.use(loadCurrentUser);
+app.use(async (req, res, next) => {
+  res.locals.currentUrl = req.originalUrl;
+  res.locals.cartQuantity = 0;
+  if (req.user) res.set("Cache-Control", "no-store");
+  if (req.user && ["GET", "HEAD"].includes(req.method)) {
+    try { res.locals.cartQuantity = (await require("./services/cartService").getCart(req.user.id)).quantity; }
+    catch (error) { return next(error); }
+  }
+  next();
+});
 app.use(authRoutes);
+app.use("/account/favorites", require("./routes/favorites"));
 app.use("/account/addresses", require("./routes/addresses"));
 
 app.get("/", async (req, res, next) => {
   const options = readBrowseOptions(req.query);
   try {
     const catalog = await getHomeCatalog(options);
+    await require("./services/favoriteService").markFavorites(req.user?.id, catalog.products);
     res.render("index", { title: "拾光商城 · 把喜欢带回日常", activePage: "home", query: options.query, ...catalog });
   } catch (error) {
     next(error);

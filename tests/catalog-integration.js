@@ -88,13 +88,29 @@ module.exports = async function verifyCatalog(t, { pool, base }) {
       assert.equal(detailUrl.searchParams.get("category"), slug);
       assert.equal(detailUrl.searchParams.get("page"), "2");
       const detailHtml = await (await fetch(detailUrl)).text();
-      const backMatch = detailHtml.match(/class="detail-back" href="([^\"]+)"/);
+      const backMatch = detailHtml.match(/class="detail-back(?: [^"]*)?" href="([^\"]+)"/);
       assert.ok(backMatch);
       const back = new URL(backMatch[1].replaceAll("&amp;", "&"), base);
       assert.equal(back.pathname, "/products");
       assert.equal(back.searchParams.get("page"), "2");
       assert.equal(back.searchParams.get("q"), keyword);
       assert.equal(back.searchParams.get("category"), slug);
+    });
+
+    await t.test("分类、搜索及分页链接不含商品区锚点，首页分类保留首页路径", async () => {
+      for (const pathname of ["/", "/products"]) {
+        const html = await (await fetch(`${base}${pathname}?q=${encodeURIComponent(keyword)}&category=${slug}&page=2`)).text();
+        assert.ok(!html.includes("#products"));
+        const nav = html.match(/<nav class="category-list"[\s\S]*?<\/nav>/)[0];
+        const links = [...nav.matchAll(/<a\b[^>]*href="([^"]+)"/g)].map(match => new URL(match[1].replaceAll("&amp;", "&"), base));
+        assert.ok(links.length > 1);
+        for (const link of links) {
+          assert.equal(link.pathname, pathname);
+          assert.equal(link.searchParams.get("q"), keyword);
+          assert.equal(link.searchParams.has("page"), false);
+          assert.equal(link.hash, "");
+        }
+      }
     });
 
     await t.test("无效 ID 返回 404，非法 URL 编码返回 400", async () => {

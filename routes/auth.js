@@ -4,6 +4,7 @@ const { registrationInput, registerUser, authenticate } = require("../services/u
 const { safeReturnTo, csrfToken, verifyCsrf, sessionAction } = require("../utils/auth");
 const { requireAuth } = require("../middleware/auth");
 const { cookieName, cookieOptions } = require("../config/session");
+const { deleteAccount, AccountError } = require("../services/accountService");
 const router = express.Router();
 
 async function form(req, res, page, status = 200, errors = [], values = {}) {
@@ -76,5 +77,28 @@ router.post("/logout", verifyCsrf, async (req, res, next) => {
 router.get("/account", requireAuth, (req, res) => res.render("auth/account", {
   title: "我的账户 · 拾光商城", activePage: "account", query: ""
 }));
+
+function deletionForm(req, res, status = 200, errorMessage = "") {
+  if (req.user.role !== "customer") return res.status(409).render("message", {
+    title: "无法注销账号", icon: "info", message: "管理员账号不支持自助注销", description: "管理员账号用于管理商品、订单及销售统计。",
+    activePage: "account", query: "", actionUrl: "/account", actionLabel: "返回账户"
+  });
+  return res.status(status).render("auth/delete", { title: "注销账号 · 拾光商城", activePage: "account", query: "", errorMessage });
+}
+router.get("/account/delete", requireAuth, (req, res) => deletionForm(req, res));
+router.post("/account/delete", requireAuth, verifyCsrf, limiter(5, 15 * 60 * 1000, true), async (req, res, next) => {
+  try {
+    await deleteAccount(req.user.id, req.body.password, req.body.confirmDeletion);
+    await sessionAction(req, "destroy");
+    res.clearCookie(cookieName, cookieOptions());
+    res.locals.currentUser = null;
+    res.locals.csrfToken = "";
+    res.render("message", { title: "账号已注销", icon: "info", message: "账号已注销", description: "已退出全部登录会话，个人清单已清除。",
+      activePage: "", query: "", actionUrl: "/", actionLabel: "返回首页" });
+  } catch (error) {
+    if (error instanceof AccountError) return deletionForm(req, res, error.status, error.message);
+    next(error);
+  }
+});
 
 module.exports = router;

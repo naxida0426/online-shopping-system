@@ -1,10 +1,11 @@
 const express = require("express");
 const { randomUUID } = require("node:crypto");
 const { getCart } = require("../services/cartService");
-const { createOrder, getOrders, getOwnOrder, OrderError, MAX_ORDER_CENTS } = require("../services/orderService");
+const { createOrder, getOrders, getOwnOrder, confirmReceipt, OrderError, MAX_ORDER_CENTS } = require("../services/orderService");
 const { simulatePayment, cancelOrder } = require("../services/paymentService");
 const { deliverOrderEmail } = require("../services/mailService");
-const { readOrderOptions, orderFilters, orderListUrl, orderUrl } = require("../utils/orders");
+const { readOrderOptions, orderFilters, orderListUrl, orderUrl, reviewUrl } = require("../utils/orders");
+const { createReview, reviewInput, ReviewError } = require("../services/reviewService");
 const { shippingInput, cartFingerprint } = require("../utils/checkout");
 const { toCents } = require("../utils/money");
 const { requireAuth } = require("../middleware/auth");
@@ -54,9 +55,26 @@ router.get("/checkout", async (req, res, next) => {
     res.status(error.status).render("message", { title: "地址不可用", icon: "info", message: "地址不可用", description: error.message, activePage: "orders", query: "", actionUrl: "/checkout", actionLabel: "返回结算" });
   }
 });
-router.get("/orders", async (req, res) => {
+async function renderHistory(req, res, { status = 200, reviewFeedback = null } = {}) {
   const history = await getOrders(req.user.id, req.query);
-  res.render("orders/index", { title: "我的订单 · 拾光商城", activePage: "orders", query: "", orders: history.orders, pagination: history.pagination, browse: history });
+  const reviewedItem = req.session.reviewedItem || null;
+  const receiptNotice = req.session.receiptNotice || "";
+  if (receiptNotice) { delete req.session.receiptNotice; await sessionAction(req, "save"); }
+  if (reviewedItem) { delete req.session.reviewedItem; await sessionAction(req, "save"); }
+  res.status(status).render("orders/index", { title: "我的订单 · 拾光商城", activePage: "orders", query: "", orders: history.orders, pagination: history.pagination, browse: history, reviewFeedback, reviewedItem, reviewUrl, receiptNotice });
+}
+router.get("/orders", (req, res) => renderHistory(req, res));
+router.post("/orders/:id/items/:itemId/review", verifyCsrf, async (req, res, next) => {
+  try {
+    await createReview(req.user.id, req.params.id, req.params.itemId, req.body);
+    req.session.reviewedItem = Number(req.params.itemId);
+    await sessionAction(req, "save");
+    res.redirect(303, orderListUrl(readOrderOptions(req.query)));
+  } catch (error) {
+    if (!(error instanceof ReviewError)) return next(error);
+    if (error.status === 404) return res.status(404).render("message", { title: "订单商品不存在", icon: "info", message: "订单商品不存在", description: error.message, activePage: "orders", query: "", actionUrl: "/orders?status=completed", actionLabel: "返回已完成订单" });
+    return renderHistory(req, res, { status: error.status, reviewFeedback: { orderId: Number(req.params.id), itemId: Number(req.params.itemId), values: reviewInput(req.body).values, error: error.message } });
+  }
 });
 
 async function renderOrder(req, res, { status = 200, errorMessage = "", view = "show" } = {}) {
@@ -66,15 +84,28 @@ async function renderOrder(req, res, { status = 200, errorMessage = "", view = "
     activePage: "orders", query: "", actionUrl: "/orders", actionLabel: "返回我的订单"
   });
   const browse = readOrderOptions(req.query);
-  if (view !== "show" && !order.canPay) return res.redirect(303, orderUrl(order.id, browse));
+  if (view !== "show" && !(view === "receive" ? order.canReceive : order.canPay)) return res.redirect(303, orderUrl(order.id, browse));
   const notice = req.session.orderNotice?.id === order.id ? req.session.orderNotice.text : "";
   if (notice) { delete req.session.orderNotice; await sessionAction(req, "save"); }
-  res.status(status).render(`orders/${view}`, { title: `${view === "pay" ? "模拟支付" : view === "cancel" ? "取消订单" : "订单详情"} · 拾光商城`, activePage: "orders", query: "", order, browse, notice, errorMessage });
+  res.status(status).render(`orders/${view}`, { title: `${view === "pay" ? "模拟支付" : view === "cancel" ? "取消订单" : view === "receive" ? "确认收货" : "订单详情"} · 拾光商城`, activePage: "orders", query: "", order, browse, notice, errorMessage });
 }
 router.get("/orders/:id", (req, res) => renderOrder(req, res));
 router.get("/orders/:id/pay", (req, res) => renderOrder(req, res, { view: "pay" }));
 router.get("/orders/:id/cancel", (req, res) => renderOrder(req, res, { view: "cancel" }));
-const notices = { order_expired: "订单已超时自动关闭，库存已恢复，请重新下单。", paid: "模拟支付成功，未发生真实扣款。", already_paid: "此前已完成模拟支付，未重复处理。", payment_cancelled: "已取消本次支付，订单仍待支付；取消订单才会恢复库存。", order_cancelled: "订单已取消，库存已恢复。", already_cancelled: "此前已取消，未重复恢复库存。" };
+router.get("/orders/:id/receive", (req, res) => renderOrder(req, res, { view: "receive" }));
+router.post("/orders/:id/receive", verifyCsrf, async (req, res, next) => {
+  try {
+    if (req.body.confirmReceipt !== "yes") throw new OrderError("请先确认已收到全部商品。", 422);
+    const result = await confirmReceipt(req.user.id, req.params.id);
+    req.session.receiptNotice = result.already ? "该订单已完成，可以评价。" : "收货已确认，可在下方评价商品。";
+    await sessionAction(req, "save");
+    res.redirect(303, orderListUrl({ status: "completed", query: result.orderNo }));
+  } catch (error) {
+    if (error instanceof OrderError) return renderOrder(req, res, { status: error.status, errorMessage: error.message });
+    next(error);
+  }
+});
+const notices = { order_expired: "订单已超时自动关闭，库存已恢复，请重新下单。", paid: "模拟支付成功，未发生真实扣款。订单已自动发货，请确认收货后评价。", already_paid: "此前已完成模拟支付，未重复处理。", payment_cancelled: "已取消本次支付，订单仍待支付；取消订单才会恢复库存。", order_cancelled: "订单已取消，库存已恢复。", already_cancelled: "此前已取消，未重复恢复库存。" };
 function orderAction(work, sendEmail = false) {
   return async (req, res, next) => {
     try {

@@ -4,14 +4,13 @@
     <a href="/">首页</a><span aria-hidden="true">/</span><a href="/products">全部商品</a><span aria-hidden="true">/</span>
     <a href="<%= shopUrl('', product.categoryId) %>"><%= product.categoryName %></a><span aria-hidden="true">/</span><span aria-current="page"><%= product.name %></span>
   </nav>
-  <a class="detail-back" href="<%= backUrl %>"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#arrow"/></svg>返回浏览结果</a>
+  <a class="detail-back text-action" href="<%= backUrl %>"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#arrow"/></svg>返回浏览结果</a>
   <article class="row g-4 g-lg-5 detail-product" aria-labelledby="detail-title">
     <div class="col-lg-6">
       <div class="detail-art <%= product.color %>">
         <span class="product-tag"><%= product.tag %></span>
         <img src="<%= product.image %>" alt="<%= product.name %>插画" width="600" height="520" fetchpriority="high" data-product-image>
       </div>
-      <% if (product.isDemo) { %><p class="detail-image-note">商品插画与记录仅供课程演示，不代表真实交易信息。</p><% } %>
     </div>
     <div class="col-lg-6 detail-copy">
       <span class="eyebrow"><%= product.categoryName %> · <%= product.isDemo ? '示例商品' : '商品详情' %></span>
@@ -19,10 +18,11 @@
       <p class="detail-lead"><%= product.description %></p>
       <div class="detail-price"><span><%= product.isDemo ? '示例价' : '商品价格' %></span><strong><small>¥</small><%= product.price %></strong></div>
       <dl class="detail-facts">
-        <div><dt>商品分类</dt><dd><a href="<%= shopUrl('', product.categoryId) %>"><%= product.categoryName %></a></dd></div>
+        <div><dt>商品分类</dt><dd><a class="text-action" href="<%= shopUrl('', product.categoryId) %>"><%= product.categoryName %></a></dd></div>
         <div><dt>商品编号</dt><dd><%= product.sku %></dd></div>
         <div><dt><%= product.isDemo ? '示例库存' : '当前库存' %></dt><dd><span class="stock-status <%= product.stock === 0 ? 'is-empty' : '' %>"><%= product.stock > 0 ? '有货' : '暂时缺货' %></span><span class="detail-stock-count"><%= product.stock %> 件</span></dd></div>
       </dl>
+      <%- include('../partials/favorite-button', { product }) %>
       <div class="detail-actions">
         <% if (product.stock === 0) { %><button class="btn btn-brand" type="button" disabled>暂时缺货</button>
         <% } else if (!currentUser) { %><a class="btn btn-brand" href="<%= loginUrl %>">登录后加入购物车</a>
@@ -35,9 +35,9 @@
         <% } %>
         <a class="btn btn-outline-brand" href="<%= backUrl %>">继续选购</a>
       </div>
-      <div class="demo-notice detail-notice"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#info"/></svg><span>商品信息来自 MySQL。<%= product.isDemo ? '此条记录为示例商品。' : '' %>加入购物车不会预留库存，提交订单后扣减库存；支付仅为课程模拟，不涉及真实扣款。</span></div>
+      <div class="demo-notice detail-notice"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#info"/></svg><span>下单时扣减库存。支付为课程模拟，不涉及真实扣款。</span></div>
     </div>
   </article>
-  <section class="detail-description" aria-labelledby="description-title"><span class="eyebrow">A LITTLE MORE ABOUT IT</span><h2 id="description-title">关于这件好物</h2><p><%= product.description %></p></section>
+  <%- include('reviews') %>
 </main>
 <%- include('../partials/footer') %>

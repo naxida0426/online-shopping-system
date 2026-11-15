@@ -21,7 +21,7 @@ function browseParams({ query = "", category = "all", page = 1 } = {}) {
 }
 
 function catalogUrl(query = "", category = "all", page = 1) {
-  return `/products${browseParams({ query, category, page })}#products`;
+  return `/products${browseParams({ query, category, page })}`;
 }
 
 function productUrl(id, query = "", category = "all", page = 1) {

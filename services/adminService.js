@@ -103,8 +103,7 @@ async function salesStats(adminId,input={}) {
     const [daily]=await c.execute(`SELECT DATE(o.paid_at) AS day,COUNT(*) AS orders,SUM(o.total_amount) AS amount FROM orders o WHERE ${paid} GROUP BY DATE(o.paid_at) ORDER BY day`,p);
     const [products]=await c.execute(`SELECT i.product_id AS productId,p.name,SUM(i.quantity) AS quantity,SUM(i.subtotal) AS revenue FROM order_items i JOIN orders o ON o.id=i.order_id JOIN products p ON p.id=i.product_id WHERE ${paid} GROUP BY i.product_id,p.name ORDER BY SUM(i.quantity) DESC,i.product_id LIMIT 20`,p);
     await c.commit();
-    const byDay=new Map(daily.map(row=>[row.day,row.amount])),labels=[],sales=[];
-    for(let d=Date.parse(range.start);d<=Date.parse(range.end);d+=86400000){const key=new Date(d).toISOString().slice(0,10);labels.push(key);sales.push(byDay.get(key)||"0.00");}
+    const labels=daily.map(row=>row.day),sales=daily.map(row=>row.amount);
     return {...range,...created,...revenue,products,daily,labels,sales};
   } catch(error){await c.rollback().catch(()=>{});throw error;} finally{c.release();}
 }

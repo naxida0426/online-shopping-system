@@ -1,13 +1,13 @@
 <%- include('../partials/header') %>
 <main id="main-content" class="container-xl order-page">
   <nav class="shop-breadcrumb" aria-label="结算步骤"><a href="/cart">购物车</a><span aria-hidden="true">/</span><span aria-current="page">确认订单</span></nav>
-  <div class="cart-heading"><div><span class="eyebrow">ONE STEP CLOSER</span><h1>确认订单</h1><p>核对好物和收货信息，再把喜欢带回日常。</p></div><a class="btn btn-outline-brand" href="/cart">返回购物车</a></div>
-  <div class="demo-notice"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#info"/></svg><span>课程演示，请填写虚构收货信息。提交会保存订单并扣减库存，当前不会产生资金扣款；支付仅为课程模拟，不涉及真实扣款。</span></div>
+  <div class="cart-heading"><div><h1>确认订单</h1></div><a class="btn btn-outline-brand" href="/cart">返回购物车</a></div>
+  <div class="demo-notice"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#info"/></svg><span>课程演示，请填写虚构收货信息。支付为模拟操作，不会扣款。</span></div>
   <% if (errors.length) { %><div class="alert alert-danger mt-3" role="alert"><strong>订单未创建，请检查：</strong><ul class="mb-0"><% errors.forEach(error => { %><li><%= error %></li><% }) %></ul></div><% } %>
-  <% if (blocked) { %><div class="alert alert-warning mt-3" role="alert">购物车为空、含有失效商品或金额超出支持范围。请<a href="/cart">返回购物车</a>调整后再结算。失效商品不会被悄悄略过下单。</div><% } %>
+  <% if (blocked) { %><div class="alert alert-warning mt-3" role="alert">购物车为空、含有失效商品或金额超出支持范围。请<a class="text-action" href="/cart">返回购物车</a>调整后再结算。失效商品不会被悄悄略过下单。</div><% } %>
   <form action="/orders" method="post" class="checkout-layout">
     <input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="checkoutToken" value="<%= token %>">
-    <section class="order-card" aria-labelledby="shipping-title"><span class="eyebrow">DELIVERY DETAILS</span><h2 id="shipping-title">收货信息</h2>
+    <section class="order-card" aria-labelledby="shipping-title"><h2 id="shipping-title">收货信息</h2>
       <div class="mb-4"><label for="saved-address" class="form-label">选择已保存地址</label>
         <select id="saved-address" class="form-select" aria-describedby="saved-address-help">
           <option value="">临时填写新地址</option>
@@ -15,17 +15,17 @@
           <option value="<%= address.id %>" data-name="<%= address.recipientName %>" data-phone="<%= address.recipientPhone %>" data-address="<%= address.recipientAddress %>" <%= selected ? 'selected' : '' %>><%= address.isDefault ? '默认 · ' : '' %><%= address.recipientName %> · <%= address.recipientPhone %> · <%= address.recipientAddress %></option>
           <% }) %>
         </select>
-        <div id="saved-address-help" class="form-text">选择后可临时修改，下单只保存本次填写的信息。<a href="/account/addresses">管理地址簿</a></div>
-        <noscript><p>也可点击地址填入：<% addresses.forEach(address => { %><a class="me-3" href="/checkout?address=<%= address.id %>"><%= address.recipientName %>（<%= address.recipientPhone %>）</a><% }) %></p></noscript>
+        <div id="saved-address-help" class="form-text">可选择后修改。<a class="text-action" id="manage-addresses" href="/account/addresses?from=checkout">管理地址簿</a></div>
+        <noscript><p>也可点击地址填入：<% addresses.forEach(address => { %><a class="me-3 text-action" href="/checkout?address=<%= address.id %>"><%= address.recipientName %>（<%= address.recipientPhone %>）</a><% }) %></p></noscript>
       </div>
       <div class="mb-4"><label for="recipient-name" class="form-label">收货人</label><input id="recipient-name" name="recipientName" class="form-control" required maxlength="80" autocomplete="shipping name" value="<%= values.recipientName || '' %>" placeholder="填写演示收货人"></div>
       <div class="mb-4"><label for="recipient-phone" class="form-label">手机号码</label><input id="recipient-phone" name="recipientPhone" class="form-control" type="tel" inputmode="numeric" pattern="1[3-9][0-9]{9}" required maxlength="11" autocomplete="shipping tel" value="<%= values.recipientPhone || '' %>" aria-describedby="phone-help"><div id="phone-help" class="form-text">11 位中国大陆手机号，演示时请使用虚构号码。</div></div>
       <div class="mb-2"><label for="recipient-address" class="form-label">详细地址</label><textarea id="recipient-address" name="recipientAddress" class="form-control" required minlength="5" maxlength="500" rows="4" autocomplete="shipping street-address" placeholder="省、市、区及详细地址（演示信息）"><%= values.recipientAddress || '' %></textarea></div>
     </section>
-    <section class="order-card" aria-labelledby="checkout-items-title"><span class="eyebrow">YOUR SELECTION</span><h2 id="checkout-items-title">本次好物 <small><%= cart.quantity %> 件</small></h2>
+    <section class="order-card" aria-labelledby="checkout-items-title"><h2 id="checkout-items-title">本次好物 <small><%= cart.quantity %> 件</small></h2>
       <div class="checkout-items"><% cart.items.forEach(item => { %><div class="checkout-item"><div><strong><%= item.name %></strong><span>¥<%= item.price %> × <%= item.quantity %></span><% if (!item.available) { %><p class="cart-warning"><%= item.reason %></p><% } %></div><strong><%= item.available ? '¥' + item.subtotal : '不可下单' %></strong></div><% }) %></div>
-      <div class="cart-total"><span>商品合计（无运费及优惠）</span><strong>¥<%= cart.total %></strong></div><p class="cart-summary-note">提交时会再次核对价格、商品状态和库存。只有整笔订单成功保存后，才会清空已结算的购物车。</p>
-      <button class="btn btn-brand w-100 mt-4" type="submit" <%= blocked ? 'disabled' : '' %>>提交订单</button><p class="cart-summary-note">订单初始状态为“待确认 / 未支付”，可继续模拟支付，也可取消未支付订单恢复库存。</p>
+      <div class="cart-total"><span>商品合计（无运费及优惠）</span><strong>¥<%= cart.total %></strong></div><p class="cart-summary-note">提交订单后扣减库存，并清空已结算的购物车。</p>
+      <button class="btn btn-brand w-100 mt-4" type="submit" <%= blocked ? 'disabled' : '' %>>提交订单</button>
     </section>
   </form>
 </main>

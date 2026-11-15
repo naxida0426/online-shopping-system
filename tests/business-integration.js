@@ -76,7 +76,7 @@ module.exports=async function verifyBusiness(t,{pool,base}){
    paidId=unpaidId;const before=await stocks();
    assert.equal((await alice.post(`/orders/${paidId}/pay`,{outcome:'success',amount:'0.01',method:'real',userId:users[1],orderStatus:'completed'})).status,303);
    const p=await payment(paidId),o=await getOwnOrder(users[0],paidId);paidNo=o.orderNo;
-   assert.equal(p.amount,'25.28');assert.equal(p.method,'simulated');assert.equal(p.status,'succeeded');assert.ok(p.paid_at);assert.equal(o.orderStatus,'confirmed');assert.equal(o.paymentStatus,'paid');assert.equal(o.emailStatus,'skipped');assert.deepEqual(await stocks(),before);
+   assert.equal(p.amount,'25.28');assert.equal(p.method,'simulated');assert.equal(p.status,'succeeded');assert.ok(p.paid_at);assert.equal(o.orderStatus,'shipped');assert.equal(o.paymentStatus,'paid');assert.equal(o.emailStatus,'skipped');assert.deepEqual(await stocks(),before);
    const page=await alice.request(`/orders/${paidId}`);assert.ok(page.body.includes('尚未验证发送'));assert.ok(page.body.includes('未发生真实')||page.body.includes('不涉及真实'));
   });
   await t.test('重复支付并发请求幂等，已支付订单不能退回取消',async()=>{
@@ -96,7 +96,7 @@ module.exports=async function verifyBusiness(t,{pool,base}){
    const before=await stocks(),id=await makeOrder(),held=await stocks();const replies=await Promise.all([alice.post(`/orders/${id}/pay`,{outcome:'success'}),alice.post(`/orders/${id}/cancel`,{confirmCancel:'yes'})]);assert.deepEqual(replies.map(r=>r.status).sort(),[303,409]);const o=await getOwnOrder(users[0],id);assert.deepEqual(await stocks(),o.paymentStatus==='paid'?held:before);assert.equal(o.payment.status,o.paymentStatus==='paid'?'succeeded':'cancelled');
   });
   await t.test('支付或恢复库存的中途写入故障会整体回滚',async()=>{
-   let id=await makeOrder(),before=await stocks();await failOnce("UPDATE orders SET order_status = 'confirmed'",()=>simulatePayment(users[0],id,'success'));assert.equal(await payment(id),undefined);assert.equal((await getOwnOrder(users[0],id)).paymentStatus,'unpaid');assert.deepEqual(await stocks(),before);
+   let id=await makeOrder(),before=await stocks();await failOnce("UPDATE orders SET order_status = 'shipped'",()=>simulatePayment(users[0],id,'success'));assert.equal(await payment(id),undefined);assert.equal((await getOwnOrder(users[0],id)).paymentStatus,'unpaid');assert.deepEqual(await stocks(),before);
    await failOnce("UPDATE orders SET order_status = 'cancelled'",()=>cancelOrder(users[0],id));assert.equal(await payment(id),undefined);assert.deepEqual(await stocks(),before);assert.equal((await getOwnOrder(users[0],id)).orderStatus,'pending');await cancelOrder(users[0],id);
   });
   await t.test('后台状态只能按已支付确认→发货→完成推进，不能伪造支付',async()=>{
@@ -114,6 +114,14 @@ module.exports=async function verifyBusiness(t,{pool,base}){
    const s=await admin.salesStats(adminId,range);assert.equal(s.orderCount,baseline.orderCount+4);assert.equal(s.paidCount,baseline.paidCount+2);assert.equal(s.salesAmount,formatCents(toCents(baseline.salesAmount)+3762n));
    assert.equal(Number(s.products.find(p=>p.productId===products[0]).quantity),3);assert.equal(s.products.find(p=>p.productId===products[0]).revenue,'37.02');assert.deepEqual(s.labels,['2050-03-01']);
    const data=await staff.request('/admin/stats/data?start=2050-03-01&end=2050-03-01');assert.equal(data.status,200);assert.equal(JSON.parse(data.body).salesAmount,s.salesAmount);
+   const sparse=await admin.salesStats(adminId,{start:'2050-02-28',end:'2050-03-03'});
+   assert.deepEqual(sparse.labels,['2050-03-01']);assert.deepEqual(sparse.sales,[s.salesAmount]);
+   const sparseHtml=await staff.request('/admin/stats?start=2050-02-28&end=2050-03-03');
+   assert.ok(!sparseHtml.body.includes('<td>2050-03-02</td>'));
+   const emptyStats=await admin.salesStats(adminId,{start:'2090-01-01',end:'2090-01-03'});
+   assert.deepEqual(emptyStats.labels,[]);assert.deepEqual(emptyStats.sales,[]);
+   const emptyStatsPage=await staff.request('/admin/stats?start=2090-01-01&end=2090-01-03');
+   assert.ok(emptyStatsPage.body.includes('该区间暂无支付记录'));assert.ok(!emptyStatsPage.body.includes('id="sales-chart"'));assert.ok(!emptyStatsPage.body.includes('<caption>支付日期明细</caption>'));
    assert.equal((await staff.request('/admin/stats?start=2050-02-30&end=2050-03-01')).status,422);assert.equal((await staff.request('/admin/stats?start=2090-01-01&end=2090-01-01')).status,200);
   });
   await t.test('全部订单历史可分页和筛选，参数注入不扩大结果集，返回保留条件',async()=>{

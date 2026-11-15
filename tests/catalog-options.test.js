@@ -14,6 +14,7 @@ test("筛选参数拒绝数组和非整数页码，并限制关键词长度", ()
 test("列表与详情链接编码关键词并保留分类和页码，返回路径固定在本站", () => {
   const list = new URL(catalogUrl('杯 & <script>', "home", 2), "http://localhost");
   assert.equal(list.pathname, "/products");
+  assert.equal(list.hash, "");
   assert.equal(list.searchParams.get("q"), '杯 & <script>');
   assert.equal(list.searchParams.get("category"), "home");
   assert.equal(list.searchParams.get("page"), "2");

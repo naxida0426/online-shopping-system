@@ -7,6 +7,7 @@ router.get("/", async (req, res, next) => {
   const options = readBrowseOptions(req.query);
   try {
     const catalog = await getProductList(options);
+    await require("../services/favoriteService").markFavorites(req.user?.id, catalog.products);
     res.render("products/index", {
       title: options.query ? `${options.query} · 商品搜索 · 拾光商城` : "发现好物 · 拾光商城",
       activePage: "products", query: options.query, ...catalog
@@ -26,7 +27,10 @@ router.get("/:id", async (req, res, next) => {
         actionUrl: catalogUrl(options.query, options.category, options.page), actionLabel: "返回商品列表"
       });
     }
+    await require("../services/favoriteService").markFavorites(req.user?.id, [product]);
+    const feedback = await require("../services/reviewService").getProductReviews(product.id, req.query.reviewPage);
     res.render("products/show", {
+      feedback,
       title: `${product.name} · 拾光商城`, activePage: "products", product,
       query: options.query, category: options.category,
       loginUrl: `/login?next=${encodeURIComponent(productUrl(product.id, options.query, options.category, options.page))}`,

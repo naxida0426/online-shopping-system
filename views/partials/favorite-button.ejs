@@ -1,0 +1,9 @@
+<% if (currentUser) { %>
+<form class="favorite-form" action="/account/favorites/<%= product.id %>" method="post" data-favorite-id="<%= product.id %>">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <input type="hidden" name="returnTo" value="<%= currentUrl %>">
+  <input type="hidden" name="action" value="<%= product.isFavorite ? 'remove' : 'add' %>">
+  <button type="submit" class="favorite-button" aria-label="<%= product.isFavorite ? '取消收藏' : '收藏' %><%= product.name %>" aria-pressed="<%= product.isFavorite ? 'true' : 'false' %>"><span aria-hidden="true"><%= product.isFavorite ? '♥' : '♡' %></span> <span data-favorite-label><%= product.isFavorite ? '已收藏' : '收藏' %></span></button>
+  <span data-favorite-error role="status"></span>
+</form>
+<% } else { %><a class="favorite-button" href="/login?next=<%= encodeURIComponent(currentUrl) %>"><span aria-hidden="true">♡</span> 登录后收藏</a><% } %>

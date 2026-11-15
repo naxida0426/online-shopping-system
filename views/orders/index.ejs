@@ -1,3 +1,27 @@
-<%- include('../partials/header') %><main id="main-content" class="container-xl order-page"><div class="cart-heading"><div><span class="eyebrow">MY ORDERS</span><h1>我的订单</h1><p>查询全部历史订单；支付均为课程模拟。</p></div><a class="btn btn-outline-brand" href="/products">继续选购</a></div><form action="/orders" method="get" class="order-filters"><div><label for="order-search">订单号</label><input class="form-control" id="order-search" type="search" name="q" maxlength="50" value="<%= browse.query %>" placeholder="完整或部分订单号"></div><div><label for="order-filter">状态</label><select class="form-select" id="order-filter" name="status"><% Object.entries(orderFilters).forEach(([v,label])=>{ %><option value="<%= v %>" <%= browse.status===v?'selected':'' %>><%= label %></option><% }) %></select></div><button class="btn btn-brand">查询订单</button><a href="/orders">清除筛选</a></form><% if(browse.invalidStatus){ %><p class="catalog-hint">无效状态，已切换到全部订单。</p><% } %><% if(pagination.wasAdjusted){ %><p class="catalog-hint">页码超出范围，已显示最后一页。</p><% } %><p class="order-results">共 <%= pagination.total %> 笔订单 · 第 <%= pagination.page %> / <%= pagination.totalPages %> 页</p>
-<% if(!orders.length){ %><section class="empty-state cart-empty"><h2><%= browse.query||browse.status!=='all'?'没有符合条件的订单':'还没有订单' %></h2><p>调整筛选条件，或前往购物车选择好物。</p><a class="btn btn-brand" href="/cart">查看购物车</a></section><% }else{ %><div class="order-list"><% orders.forEach(o=>{ %><article class="order-card order-list-item"><div><span class="eyebrow"><%= o.createdAt %></span><h2 class="order-number"><a href="<%= orderUrl(o.id,browse) %>"><%= o.orderNo %></a></h2><p><%= orderLabels[o.orderStatus] %> · <%= paymentLabels[o.paymentStatus] %></p></div><div class="order-list-amount"><strong>¥<%= o.total %></strong><div class="payment-actions"><a class="btn btn-outline-brand" href="<%= orderUrl(o.id,browse) %>">查看详情</a><% if(o.orderStatus==='pending'&&o.paymentStatus==='unpaid'){ %><a class="btn btn-brand" href="<%= orderUrl(o.id,browse,'pay') %>">模拟支付</a><% } %></div></div></article><% }) %></div><% } %>
-<% if(pagination.totalPages>1){ %><nav class="order-pagination" aria-label="订单分页"><ul class="pagination flex-wrap justify-content-center"><% pagination.items.forEach(page=>{ %><li class="page-item <%= page===pagination.page?'active':page===null?'disabled':'' %>"><% if(page===null){ %><span class="page-link">…</span><% }else{ %><a class="page-link" href="<%= orderListUrl({...browse,page}) %>" <%- page===pagination.page?'aria-current="page"':'' %>><%= page %></a><% } %></li><% }) %></ul></nav><% } %></main><%- include('../partials/footer') %>
+<%- include('../partials/header') %>
+<main id="main-content" class="container-xl order-page">
+  <div class="cart-heading"><div><h1><%= browse.status === 'completed' ? '已完成订单' : '我的订单' %></h1><p>查询订单与评价。</p></div><div class="payment-actions"><a class="btn btn-outline-brand" href="/orders">全部订单</a><a class="btn btn-outline-brand" href="/products">继续选购</a></div></div>
+  <form action="/orders" method="get" class="order-filters">
+    <div><label for="order-search">订单号</label><input class="form-control" id="order-search" type="search" name="q" maxlength="50" value="<%= browse.query %>" placeholder="完整或部分订单号"></div>
+    <div><label for="order-filter">状态</label><select class="form-select" id="order-filter" name="status"><% Object.entries(orderFilters).forEach(([value,label]) => { %><option value="<%= value %>" <%= browse.status === value ? 'selected' : '' %>><%= label %></option><% }) %></select></div>
+    <button class="btn btn-brand">查询订单</button><a class="order-clear text-action" href="/orders">清除筛选</a>
+  </form>
+  <% if (receiptNotice) { %><p class="alert alert-success" role="status"><%= receiptNotice %></p><% } %>
+  <% if (browse.invalidStatus) { %><p class="catalog-hint">无效状态，已切换到全部订单。</p><% } %>
+  <% if (pagination.wasAdjusted) { %><p class="catalog-hint">页码超出范围，已显示最后一页。</p><% } %>
+  <p class="order-results">共 <%= pagination.total %> 笔订单 · 第 <%= pagination.page %> / <%= pagination.totalPages %> 页</p>
+  <% if (reviewFeedback && !orders.some(o => o.id === reviewFeedback.orderId && o.reviewItems.some(item => item.id === reviewFeedback.itemId && !item.reviewId))) { %><p class="alert alert-danger" role="alert"><%= reviewFeedback.error %></p><% } %>
+  <% if (!orders.length) { %>
+    <section class="empty-state cart-empty"><h2><%= browse.query || browse.status !== 'all' ? '没有符合条件的订单' : '还没有订单' %></h2><p>调整筛选条件，或前往购物车选择好物。</p><a class="btn btn-brand" href="/cart">查看购物车</a></section>
+  <% } else { %><div class="order-list"><% orders.forEach(o => { %>
+    <article class="order-card">
+      <div class="order-list-item"><div><span><%= o.createdAt %></span><h2 class="order-number"><a class="text-action" href="<%= orderUrl(o.id,browse) %>"><%= o.orderNo %></a></h2><p><%= orderLabels[o.orderStatus] %> · <%= paymentLabels[o.paymentStatus] %></p></div>
+        <div class="order-list-amount"><strong>¥<%= o.total %></strong><div class="payment-actions"><a class="btn btn-outline-brand" href="<%= orderUrl(o.id,browse) %>">查看详情</a><% if (o.orderStatus === 'pending' && o.paymentStatus === 'unpaid') { %><a class="btn btn-brand" href="<%= orderUrl(o.id,browse,'pay') %>">模拟支付</a><% } %></div></div>
+      </div>
+      <% if (o.paymentStatus === 'paid' && o.orderStatus === 'shipped') { %><div class="payment-actions mt-3"><a class="btn btn-brand" href="<%= orderUrl(o.id,browse,'receive') %>">确认收货并评价</a></div><% } %>
+      <%- include('reviews', { o }) %>
+    </article>
+  <% }) %></div><% } %>
+  <% if (pagination.totalPages > 1) { %><nav class="order-pagination" aria-label="订单分页"><ul class="pagination flex-wrap justify-content-center"><% pagination.items.forEach(page => { %><li class="page-item <%= page === pagination.page ? 'active' : page === null ? 'disabled' : '' %>"><% if (page === null) { %><span class="page-link">…</span><% } else { %><a class="page-link" href="<%= orderListUrl({...browse,page}) %>" <%- page === pagination.page ? 'aria-current="page"' : '' %>><%= page %></a><% } %></li><% }) %></ul></nav><% } %>
+</main>
+<%- include('../partials/footer') %>

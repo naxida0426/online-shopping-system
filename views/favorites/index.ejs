@@ -1,0 +1,21 @@
+<%- include('../partials/header') %>
+<main id="main-content" class="container-xl order-page">
+  <div class="cart-heading"><div><h1>我的收藏</h1><p>共 <%= pagination.total %> 件商品</p></div><a class="btn btn-outline-brand" href="/account">返回账户</a></div>
+  <% if (!products.length) { %><section class="order-card"><h2>还没有收藏商品</h2><a class="btn btn-brand" href="/products">去逛逛</a></section><% } %>
+  <div class="row g-4"><% products.forEach(product => { %><div class="col-12 col-sm-6 col-lg-4"><article class="order-card favorite-card">
+    <img src="<%= product.image %>" alt="<%= product.name %>" width="300" height="240" data-product-image>
+    <h2><% if (product.available) { %><a href="/products/<%= product.id %>"><%= product.name %></a><% } else { %><%= product.name %><% } %></h2>
+    <p><%= product.available ? '¥' + product.price : '商品已下架，暂不可购买' %></p>
+    <% if (product.available) { %><p><%= product.stock > 0 ? '库存：' + product.stock + ' 件' : '暂时缺货' %></p><% } %>
+    <form action="/cart/items" method="post" class="favorite-cart-form">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="productId" value="<%= product.id %>">
+      <label for="favorite-quantity-<%= product.id %>">数量</label>
+      <input id="favorite-quantity-<%= product.id %>" class="form-control" type="number" name="quantity" min="1" max="<%= Math.max(1, Math.min(product.stock, 999)) %>" value="1" required <%= !product.available || product.stock === 0 ? 'disabled' : '' %>>
+      <button type="submit" class="btn btn-brand" <%= !product.available || product.stock === 0 ? 'disabled' : '' %>><%= !product.available ? '已下架' : product.stock === 0 ? '暂时缺货' : '加入购物车' %></button>
+    </form>
+    <%- include('../partials/favorite-button', { product }) %>
+  </article></div><% }) %></div>
+  <% if (pagination.totalPages > 1) { %><nav class="order-pagination" aria-label="收藏分页"><ul class="pagination flex-wrap"><% pagination.items.forEach(page => { %><li class="page-item <%= page === pagination.page ? 'active' : page === null ? 'disabled' : '' %>"><% if (page === null) { %><span class="page-link">…</span><% } else { %><a class="page-link" href="/account/favorites?page=<%= page %>" <%- page === pagination.page ? 'aria-current="page"' : '' %>><%= page %></a><% } %></li><% }) %></ul></nav><% } %>
+</main>
+<%- include('../partials/footer') %>

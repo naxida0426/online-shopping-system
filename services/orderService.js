@@ -66,13 +66,14 @@ const orderColumns = `o.id, o.order_no AS orderNo, o.total_amount AS total, o.or
 async function getOrders(userId, input = {}) {
   await expireOrders({ userId });
   const options = readOrderOptions(input), conditions = ["o.user_id = ?"], params = [userId];
-  const filters = { unpaid: "o.order_status = 'pending' AND o.payment_status = 'unpaid'", paid: "o.payment_status = 'paid' AND o.order_status <> 'cancelled'", cancelled: "o.order_status = 'cancelled'" };
+  const filters = { unpaid: "o.order_status = 'pending' AND o.payment_status = 'unpaid'", paid: "o.payment_status = 'paid' AND o.order_status <> 'cancelled'", shipped: "o.order_status = 'shipped' AND o.payment_status = 'paid'", completed: "o.order_status = 'completed' AND o.payment_status = 'paid'", cancelled: "o.order_status = 'cancelled'" };
   if (filters[options.status]) conditions.push(filters[options.status]);
   if (options.query) { conditions.push("o.order_no LIKE ? ESCAPE '!'"); params.push(`%${options.query.replace(/[!%_]/g, "!$&")}%`); }
   const where = `FROM orders o WHERE ${conditions.join(" AND ")}`;
   const [[count]] = await getPool().execute(`SELECT COUNT(*) AS total ${where}`, params);
   const pagination = orderPagination(Number(count.total), options.page);
   const [orders] = await getPool().execute(`SELECT ${orderColumns} ${where} ORDER BY o.id DESC LIMIT ? OFFSET ?`, [...params, String(pagination.pageSize), String((pagination.page - 1) * pagination.pageSize)]);
+  await require("./reviewService").attachOrderReviews(userId, orders);
   return { orders, pagination, ...options, page: pagination.page };
 }
 
@@ -92,8 +93,20 @@ async function getOwnOrder(userId, id) {
      FROM order_items WHERE order_id = ? ORDER BY id`, [order.id]
   );
   const { paymentNo, paymentAmount, recordStatus, recordPaidAt, ...details } = order;
-  return { ...details, items, canPay: order.orderStatus === "pending" && order.paymentStatus === "unpaid",
+  return { ...details, items, canReceive: order.orderStatus === "shipped" && order.paymentStatus === "paid", canPay: order.orderStatus === "pending" && order.paymentStatus === "unpaid",
     payment: paymentNo ? { paymentNo, amount: paymentAmount, status: recordStatus, paidAt: recordPaidAt } : null };
 }
 
-module.exports = { createOrder, getOrders, getOwnOrder, OrderError, MAX_ORDER_CENTS };
+async function confirmReceipt(userId, id) {
+  if (!["string", "number"].includes(typeof id) || !isValidProductId(id)) throw new OrderError("订单不存在或不属于当前账号。", 404);
+  return withUserTransaction(userId, async c => {
+    const [[order]] = await c.execute("SELECT order_no, order_status, payment_status FROM orders WHERE id = ? AND user_id = ? FOR UPDATE", [Number(id), userId]);
+    if (!order) throw new OrderError("订单不存在或不属于当前账号。", 404);
+    if (order.order_status === "completed" && order.payment_status === "paid") return { orderNo: order.order_no, already: true };
+    if (order.order_status !== "shipped" || order.payment_status !== "paid") throw new OrderError("只能确认本人已支付、已发货订单的收货。");
+    await c.execute("UPDATE orders SET order_status = 'completed' WHERE id = ? AND user_id = ?", [Number(id), userId]);
+    return { orderNo: order.order_no, already: false };
+  });
+}
+
+module.exports = { createOrder, getOrders, getOwnOrder, confirmReceipt, OrderError, MAX_ORDER_CENTS };
