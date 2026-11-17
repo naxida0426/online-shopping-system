@@ -4,7 +4,7 @@
   <section class="bento-grid" aria-labelledby="hero-title">
     <article class="hero-feature">
       <div class="hero-feature-body"><div class="hero-copy"><h1 id="hero-title">让科技，<br>更有<mark>个性。</mark></h1><a class="btn btn-dark" href="/products" data-scroll-products>进入灵感仓库 ↗</a></div>
-      <% if(featured){ %><a class="hero-product <%= featured.color %>" href="<%= productUrl(featured.id,query,category,pagination.page) %>"><img src="<%= featured.image %>" alt="<%= featured.name %>" width="480" height="350" fetchpriority="high" data-product-image><span class="hero-product-caption"><strong><%= featured.name %></strong><span class="mono">¥<%= featured.price %> ↗</span></span></a><% }else{ %><div class="hero-product"><p>新一轮灵感即将入库</p><a class="btn btn-brand" href="/products">探索全部商品</a></div><% } %></div>
+      <%- include('partials/featured-product',{featured}) %></div>
 
     </article>
     <%- include('partials/flash-card',{flashOffer}) %>

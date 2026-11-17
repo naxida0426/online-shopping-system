@@ -85,9 +85,12 @@ async function getProductById(id) {
 
 // 保留第 2 天的调用接口，首页与完整列表共享查询和可见性规则。
 const getHomeCatalog = getProductList;
-async function getRandomProduct(){
+async function getRandomProduct(excludeId){
+  const exclude=['string','number'].includes(typeof excludeId)&&isValidProductId(excludeId)?Number(excludeId):null;
   const[rows]=await getPool().execute(`SELECT ${productColumns} FROM products p JOIN categories c ON c.id=p.category_id
-    WHERE ${visibleProduct} AND p.stock>0 ORDER BY RAND() LIMIT 1`);
-  return rows.length?mapProduct(rows[0]):null;
+    WHERE ${visibleProduct} AND p.stock>0 ${exclude?'AND p.id<>?':''} ORDER BY RAND() LIMIT 1`,exclude?[exclude]:[]);
+  if(rows.length)return mapProduct(rows[0]);
+  const current=exclude?await getProductById(exclude):null;
+  return current?.stock>0?current:null;
 }
 module.exports = { getHomeCatalog, getProductList, getProductById, getRandomProduct };

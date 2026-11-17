@@ -113,6 +113,15 @@ module.exports = async function verifyCatalog(t, { pool, base }) {
       }
     });
 
+    await t.test('随机主推排除当前商品，异步入口同步返回新图文价格',async()=>{
+      const{getRandomProduct}=require('../services/catalogService');
+      const current=await getRandomProduct(),next=await getRandomProduct(current.id);
+      assert(next);assert.notEqual(next.id,current.id);assert(next.stock>0);
+      const response=await fetch(`${base}/promotions/featured?exclude=${current.id}`);
+      assert.equal(response.status,200);assert.equal(response.headers.get('cache-control'),'no-store');
+      const html=await response.text(),match=html.match(/data-featured-id="(\d+)"/);
+      assert(match);assert.notEqual(Number(match[1]),current.id);assert(html.includes('hero-product-caption'));assert(html.includes('data-product-image'));
+    });
     await t.test("无效 ID 返回 404，非法 URL 编码返回 400", async () => {
       for (const id of ["0", "-1", "01", "1.5", "1e2", "abc", "4294967296", "1 OR 1=1"]) {
         assert.equal(await getProductById(id), null);

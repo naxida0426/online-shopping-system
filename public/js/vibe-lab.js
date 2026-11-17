@@ -24,6 +24,31 @@
   });
   const coupon=document.getElementById('payment-coupon');
   if(coupon){try{const saved=sessionStorage.getItem('vibe-demo-coupon');if(/^VIBE-[A-F0-9]{20}$/.test(saved||''))coupon.value=saved;}catch{}}
+  let featuredRequest;
+  function refreshFeatured(){
+    if(featuredRequest)return featuredRequest;
+    const current=document.querySelector('.hero-product');
+    if(!current?.dataset.featuredId)return Promise.resolve();
+    current.setAttribute('aria-busy','true');
+    featuredRequest=(async()=>{
+      try{
+        const response=await fetch('/promotions/featured?exclude='+encodeURIComponent(current.dataset.featuredId),{headers:{Accept:'text/html'},cache:'no-store'});
+        if(!response.ok)throw Error('featured refresh failed');
+        const doc=new DOMParser().parseFromString(await response.text(),'text/html'),next=doc.querySelector('.hero-product');
+        if(!next)throw Error('invalid featured product');
+        const node=document.importNode(next,true);current.replaceWith(node);prepareProductImages(node);
+        try{if(node.dataset.featuredId)sessionStorage.setItem('vibe-featured-product',node.dataset.featuredId);}catch{}
+      }finally{current.removeAttribute('aria-busy');featuredRequest=null;}
+    })();
+    return featuredRequest;
+  }
+  const initialFeatured=document.querySelector('.hero-product');
+  if(initialFeatured?.dataset.featuredId){
+    let previous;
+    try{previous=sessionStorage.getItem('vibe-featured-product');}catch{}
+    if(previous===initialFeatured.dataset.featuredId)refreshFeatured().catch(()=>tell('主推商品更新失败，请刷新页面重试。'));
+    else{try{sessionStorage.setItem('vibe-featured-product',initialFeatured.dataset.featuredId);}catch{}}
+  }
   function updateFlashClock(){
     const clock=document.querySelector('[data-flash-countdown]');if(!clock)return;
     const seconds=Math.max(0,Math.floor((Number(clock.dataset.expiresAt)-Date.now())/1000));
@@ -33,6 +58,7 @@
   if(document.querySelector('.flash-card')){
     updateFlashClock();setInterval(updateFlashClock,1000);
     document.addEventListener('flash:refresh',async()=>{
+      const featuredRefresh=refreshFeatured().catch(()=>tell('主推商品更新失败，请刷新页面重试。'));
       try{
         const response=await fetch('/promotions/flash',{headers:{Accept:'text/html'},cache:'no-store'});
         if(!response.ok)throw Error('refresh failed');
@@ -44,7 +70,7 @@
       }catch{
         const note=document.querySelector('[data-flash-refresh-error]');
         if(note){note.hidden=false;note.textContent='商品已加入购物袋，闪购更新失败，请刷新查看下一件商品。';}
-      }
+      }finally{await featuredRefresh;}
     });
   }
   document.addEventListener('click', event => {
