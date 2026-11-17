@@ -6,7 +6,7 @@
   <section class="lab-panel order-card address-form">
     <h2>注销 <%= currentUser.username %></h2>
     <p>注销后将无法登录此账号，购物车、收藏和地址簿会被清空。历史订单、支付记录和已提交评价保留。</p>
-    <p>未支付订单仍按原支付期限自动关闭并恢复库存。原用户名和邮箱不再用于重新注册。</p>
+    <p>未支付订单仍按原支付期限自动关闭并恢复库存。注销后可用原用户名和邮箱重新注册，新账号不会继承旧订单和个人清单。</p>
     <% if (errorMessage) { %><div class="alert alert-danger" role="alert"><%= errorMessage %></div><% } %>
     <form action="/account/delete" method="post">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">

@@ -2,6 +2,7 @@ const bcrypt = require("bcryptjs");
 const { randomBytes } = require("node:crypto");
 const { getPool } = require("../config/db");
 const { isValidEmail } = require("../utils/email");
+const { retiredIdentity } = require('../utils/account-identity');
 const rounds = 12;
 let dummyHash;
 
@@ -19,9 +20,36 @@ function registrationInput(body = {}) {
 
 async function registerUser(input) {
   const hash = await bcrypt.hash(input.password, rounds);
-  // 角色由服务端指定，忽略表单提交的 role 等额外字段。
-  const [result] = await getPool().execute("INSERT INTO users (username, email, password_hash, role) VALUES (?, ?, ?, 'customer')", [input.username, input.email, hash]);
-  return result.insertId;
+  const connection = await getPool().getConnection();
+  try {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        await connection.beginTransaction();
+        // 兼容旧版本已注销但仍占用用户名、邮箱的记录，不复用旧用户 ID。
+        const [deleted] = await connection.execute(
+          "SELECT id FROM users WHERE status='deleted' AND (username=? OR email=?) ORDER BY id FOR UPDATE",
+          [input.username, input.email]
+        );
+        for (const old of deleted) {
+          const retired = retiredIdentity(old.id);
+          await connection.execute("UPDATE users SET username=?,email=? WHERE id=? AND status='deleted'", [retired.username, retired.email, old.id]);
+        }
+        // 正常和停用账号仍受唯一约束保护，角色由服务端指定。
+        const [result] = await connection.execute(
+          "INSERT INTO users (username, email, password_hash, role) VALUES (?, ?, ?, 'customer')",
+          [input.username, input.email, hash]
+        );
+        await connection.commit();
+        return result.insertId;
+      } catch (error) {
+        await connection.rollback();
+        if (attempt < 2 && ["ER_LOCK_DEADLOCK", "ER_LOCK_WAIT_TIMEOUT"].includes(error.code)) continue;
+        throw error;
+      }
+    }
+  } finally {
+    connection.release();
+  }
 }
 
 async function authenticate(identifier, password) {

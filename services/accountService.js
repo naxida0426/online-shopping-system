@@ -1,5 +1,6 @@
 const bcrypt = require("bcryptjs");
 const { withUserTransaction } = require("../config/transaction");
+const { retiredIdentity } = require('../utils/account-identity');
 class AccountError extends Error {
   constructor(message, status = 409) { super(message); this.status = status; }
 }
@@ -10,7 +11,8 @@ async function deleteAccount(userId, password, confirmDeletion) {
     const [[user]] = await c.execute("SELECT role, password_hash FROM users WHERE id = ?", [userId]);
     if (user.role !== "customer") throw new AccountError("管理员账号不支持自助注销。");
     if (!await bcrypt.compare(password, user.password_hash)) throw new AccountError("密码不正确，账号未注销。", 422);
-    await c.execute("UPDATE users SET status = 'deleted', deleted_at = CURRENT_TIMESTAMP WHERE id = ?", [userId]);
+    const retired=retiredIdentity(userId);
+    await c.execute("UPDATE users SET status = 'deleted', deleted_at = CURRENT_TIMESTAMP, username = ?, email = ? WHERE id = ?", [retired.username,retired.email,userId]);
     await c.execute("DELETE FROM cart_items WHERE user_id = ?", [userId]);
     await c.execute("DELETE FROM favorites WHERE user_id = ?", [userId]);
     await c.execute("DELETE FROM addresses WHERE user_id = ?", [userId]);
