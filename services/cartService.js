@@ -3,6 +3,7 @@ const { isValidProductId } = require("../utils/catalog");
 const { toCents, formatCents } = require("../utils/money");
 const { withUserTransaction } = require("../config/transaction");
 const { flashPrice } = require('../utils/promotions');
+const { rotateFlashOffer } = require('./promotionService');
 
 class CartError extends Error {
   constructor(message, status = 422) { super(message); this.status = status; }
@@ -31,7 +32,7 @@ async function getCart(userId) {
   const [rows] = await getPool().execute(
     `SELECT ci.id, ci.product_id, ci.quantity, p.name, p.sku, p.price, p.stock, p.image_path,
             p.is_demo, p.status, p.deleted_at, c.is_active,
-            (f.id IS NOT NULL AND f.product_id=p.id AND f.expires_at>NOW()) AS flash_active, ci.flash_offer_id
+            (f.id IS NOT NULL AND f.expires_at>NOW()) AS flash_active, ci.flash_offer_id
      FROM cart_items ci JOIN products p ON p.id = ci.product_id JOIN categories c ON c.id = p.category_id
      LEFT JOIN flash_offers f ON f.id=ci.flash_offer_id WHERE ci.user_id = ? ORDER BY ci.id DESC`, [userId]
   );
@@ -75,14 +76,14 @@ function checkQuantity(product, quantity) {
 async function addItem(userId, productValue, quantityValue, flashOfferValue) {
   const productId = readId(productValue);
   const quantity = readQuantity(quantityValue);
+  const offerId=flashOfferValue===undefined || flashOfferValue===''?null:readId(flashOfferValue);
   return withUserTransaction(userId, async connection => {
-    const product = await lockProduct(connection, productId);
-    let offerId=null;
-    if(flashOfferValue!==undefined && flashOfferValue!==''){
-      offerId=readId(flashOfferValue);
-      const [[offer]]=await connection.execute('SELECT id FROM flash_offers WHERE id=? AND product_id=? AND expires_at>NOW() FOR SHARE',[offerId,productId]);
+    // Flash checkout follows the same offer → product lock order.
+    if(offerId){
+      const [[offer]]=await connection.execute('SELECT id FROM flash_offers WHERE id=? AND product_id=? AND expires_at>NOW() FOR UPDATE',[offerId,productId]);
       if(!offer)throw new CartError('闪购已结束或商品不匹配，请刷新首页。',409);
     }
+    const product = await lockProduct(connection, productId);
     const [rows] = await connection.execute("SELECT id, quantity FROM cart_items WHERE user_id = ? AND product_id = ? FOR UPDATE", [userId, productId]);
     const nextQuantity = (rows[0]?.quantity || 0) + quantity;
     checkQuantity(product, nextQuantity);
@@ -91,6 +92,7 @@ async function addItem(userId, productValue, quantityValue, flashOfferValue) {
     } else {
       await connection.execute("INSERT INTO cart_items (user_id, product_id, quantity,flash_offer_id) VALUES (?, ?, ?,?)", [userId, productId, quantity,offerId]);
     }
+    if(offerId)await rotateFlashOffer(connection,offerId,productId);
   });
 }
 

@@ -3,16 +3,11 @@
 
   <section class="bento-grid" aria-labelledby="hero-title">
     <article class="hero-feature">
-      <% const featured = products[0]; %>
       <div class="hero-feature-body"><div class="hero-copy"><h1 id="hero-title">让科技，<br>更有<mark>个性。</mark></h1><a class="btn btn-dark" href="/products" data-scroll-products>进入灵感仓库 ↗</a></div>
       <% if(featured){ %><a class="hero-product <%= featured.color %>" href="<%= productUrl(featured.id,query,category,pagination.page) %>"><img src="<%= featured.image %>" alt="<%= featured.name %>" width="480" height="350" fetchpriority="high" data-product-image><span class="hero-product-caption"><strong><%= featured.name %></strong><span class="mono">¥<%= featured.price %> ↗</span></span></a><% }else{ %><div class="hero-product"><p>新一轮灵感即将入库</p><a class="btn btn-brand" href="/products">探索全部商品</a></div><% } %></div>
 
     </article>
-    <article class="flash-card"><h2>灵感闪购 <span class="sale-badge">8 折</span></h2>
-      <% if(flashOffer){ %><a class="flash-product-name" href="/products/<%= flashOffer.productId %>"><%= flashOffer.name %></a><div class="flash-prices"><del>¥<%= flashOffer.originalPrice %></del><strong>¥<%= flashOffer.price %></strong></div><div class="flash-time" data-flash-countdown data-expires-at="<%= flashOffer.expiresAt %>">--:--:--</div>
-      <% if(currentUser){ %><form action="/cart/items" method="post"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="productId" value="<%= flashOffer.productId %>"><input type="hidden" name="quantity" value="1"><input type="hidden" name="flashOfferId" value="<%= flashOffer.id %>"><button class="btn btn-brand" type="submit" data-flash-buy>八折抢购 ↗</button></form><% }else{ %><a class="btn btn-brand" href="/login?next=%2F">登录抢购 ↗</a><% } %>
-      <% }else{ %><p>今日闪购已售罄</p><a href="/products" class="btn btn-outline-brand">看看其他商品</a><% } %>
-    </article>
+    <%- include('partials/flash-card',{flashOffer}) %>
     <article class="blind-card"><div class="blind-heading"><h2>灵感盲盒<br>抽取 ¥50–100</h2><span class="blind-stamp" aria-hidden="true">?</span></div><div class="coupon-output mono" data-coupon-output aria-live="polite">[ 等待抽取 ]</div><div class="payment-actions"><% if(currentUser){ %><form action="/promotions/codes" method="post" data-draw-coupon-form><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="btn btn-dark" data-draw-coupon>抽取兑换码 ↗</button></form><% }else{ %><a href="/login?next=%2F" class="btn btn-dark">登录抽取兑换码 ↗</a><% } %><button type="button" class="btn btn-outline-brand" data-copy-coupon disabled>复制</button></div><p data-draw-feedback role="status"></p></article>
   </section>
 

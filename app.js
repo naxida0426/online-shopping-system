@@ -66,7 +66,8 @@ app.get("/", async (req, res, next) => {
     const catalog = await getHomeCatalog(options);
     await require("./services/favoriteService").markFavorites(req.user?.id, catalog.products);
     const flashOffer=await require('./services/promotionService').getFlashOffer();
-    res.render("index", { title: "拾光商城 · 把喜欢带回日常", activePage: "home", query: options.query, ...catalog,flashOffer });
+    const featured=await require('./services/catalogService').getRandomProduct();
+    res.render("index", { title: "拾光商城 · 把喜欢带回日常", activePage: "home", query: options.query, ...catalog,flashOffer,featured });
   } catch (error) {
     next(error);
   }

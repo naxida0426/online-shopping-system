@@ -14,6 +14,7 @@ module.exports=async function(t,{pool,base}){
  let productId,offerId,alice,bob,catId;
  const shipping={recipientName:'促销测试',recipientPhone:'13800000000',recipientAddress:'演示城市测试地址18号'};
  const makeOrder=async(user,quantity=1,flash=false)=>{
+  if(flash)await pool.execute('UPDATE flash_offers SET product_id=? WHERE id=?',[productId,offerId]);
   await addItem(user,productId,String(quantity),flash?String(offerId):undefined);
   const cart=await getCart(user),token=randomUUID();
   return createOrder(user,token,{token,fingerprint:cartFingerprint(cart.items)},shipping);
@@ -27,13 +28,34 @@ module.exports=async function(t,{pool,base}){
   const[cat]=await pool.execute("INSERT INTO categories(slug,name) VALUES(?,'促销验收')",['promo-'+suffix]);catId=cat.insertId;
   const[p]=await pool.execute("INSERT INTO products(category_id,sku,name,description,price,stock,image_path) VALUES(?,?,'促销测试键盘','测试','123.45',500,'/images/electronics-keyboard.jpg')",[catId,'PROMO-'+suffix]);productId=p.insertId;
   const[f]=await pool.execute("INSERT INTO flash_offers(offer_day,product_id,expires_at) VALUES(?, ?, DATE_ADD(NOW(),INTERVAL 2 HOUR))",['2099-01-01',productId]);offerId=f.insertId;
-  await t.test('每日闪购固定，八折入口不能伪造商品或活动',async()=>{
+  await t.test('未抢购前闪购保持稳定，八折入口不能伪造商品或活动',async()=>{
    const first=await getFlashOffer(),next=await getFlashOffer();assert.equal(first.id,next.id);
    await assert.rejects(addItem(alice,productId,'1','4294967295'),{status:409});
    await addItem(alice,productId,'2',String(offerId));const c=await getCart(alice);assert.equal(c.total,'197.52');assert.equal(c.items[0].price,'98.76');assert.equal(c.items[0].isFlashSale,true);
+   const [[rotated]]=await pool.execute('SELECT product_id FROM flash_offers WHERE id=?',[offerId]);assert.notEqual(rotated.product_id,productId);
    await pool.execute('DELETE FROM cart_items WHERE user_id=?',[alice]);
   });
+  await t.test('闪购失败不切换商品，已入袋商品在轮换后仍保留八折',async()=>{
+   await pool.execute('UPDATE flash_offers SET product_id=? WHERE id=?',[productId,offerId]);
+   await assert.rejects(addItem(alice,productId,'999',String(offerId)),{status:409});
+   const [[same]]=await pool.execute('SELECT product_id FROM flash_offers WHERE id=?',[offerId]);assert.equal(same.product_id,productId);
+   const orderId=await makeOrder(alice,1,true),order=await getOwnOrder(alice,orderId);assert.equal(order.total,'98.76');assert.equal(order.flashDiscount,'24.69');
+   await pool.execute('UPDATE flash_offers SET product_id=? WHERE id=?',[productId,offerId]);
+  });
   let paid,code,net;
+  await t.test('闪购轮换与旧购物袋结算并发时不丢失优惠',async()=>{
+   await addItem(alice,productId,'1',String(offerId));
+   const cart=await getCart(alice),token=randomUUID();
+   const [[next]]=await pool.execute('SELECT product_id FROM flash_offers WHERE id=?',[offerId]);assert.notEqual(next.product_id,productId);
+   const [orderId]=await Promise.all([
+     createOrder(alice,token,{token,fingerprint:cartFingerprint(cart.items)},shipping),
+     addItem(bob,next.product_id,'1',String(offerId))
+   ]);
+   assert.equal((await getOwnOrder(alice,orderId)).total,'98.76');
+   const bobCart=await getCart(bob);assert.equal(bobCart.items[0].isFlashSale,true);
+   await pool.execute('DELETE FROM cart_items WHERE user_id=?',[bob]);
+   await pool.execute('UPDATE flash_offers SET product_id=? WHERE id=?',[productId,offerId]);
+  });
   await t.test('发行金额50–100元、每天一张、账户绑定及CSRF',async()=>{
    const pair=await Promise.all([issueCode(alice),issueCode(alice)]);assert.equal(pair[0].code,pair[1].code);code=pair[0];
    assert(toCents(code.amount)>=5000n&&toCents(code.amount)<=10000n);
@@ -86,6 +108,7 @@ module.exports=async function(t,{pool,base}){
    await simulatePayment(bob,zero,'success');assert.equal((await getOwnOrder(bob,zero)).payment.amount,'0.00');
   });
   await t.test('过期活动不能加购，旧八折快照不能按原价悄悄下单',async()=>{
+   await pool.execute('UPDATE flash_offers SET product_id=? WHERE id=?',[productId,offerId]);
    await addItem(alice,productId,'1',String(offerId));const cart=await getCart(alice),token=randomUUID();
    await pool.execute('UPDATE flash_offers SET expires_at=DATE_SUB(NOW(),INTERVAL 1 SECOND) WHERE id=?',[offerId]);
    await assert.rejects(addItem(bob,productId,'1',String(offerId)),{status:409});

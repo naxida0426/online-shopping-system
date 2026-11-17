@@ -24,10 +24,28 @@
   });
   const coupon=document.getElementById('payment-coupon');
   if(coupon){try{const saved=sessionStorage.getItem('vibe-demo-coupon');if(/^VIBE-[A-F0-9]{20}$/.test(saved||''))coupon.value=saved;}catch{}}
-  const clock = document.querySelector('[data-flash-countdown]');
-  if (clock) {
-    const tick = () => { const now = new Date(); const end = Number(clock.dataset.expiresAt); const s = Math.max(0, Math.floor((end - now) / 1000)); if(s===0){document.querySelector('[data-flash-buy]')?.setAttribute('disabled','');} clock.textContent = [Math.floor(s / 3600), Math.floor(s / 60) % 60, s % 60].map(n => String(n).padStart(2, '0')).join(':'); };
-    tick(); setInterval(tick, 1000);
+  function updateFlashClock(){
+    const clock=document.querySelector('[data-flash-countdown]');if(!clock)return;
+    const seconds=Math.max(0,Math.floor((Number(clock.dataset.expiresAt)-Date.now())/1000));
+    clock.textContent=[Math.floor(seconds/3600),Math.floor(seconds/60)%60,seconds%60].map(n=>String(n).padStart(2,'0')).join(':');
+    if(seconds===0)document.querySelector('[data-flash-buy]')?.setAttribute('disabled','');
+  }
+  if(document.querySelector('.flash-card')){
+    updateFlashClock();setInterval(updateFlashClock,1000);
+    document.addEventListener('flash:refresh',async()=>{
+      try{
+        const response=await fetch('/promotions/flash',{headers:{Accept:'text/html'},cache:'no-store'});
+        if(!response.ok)throw Error('refresh failed');
+        const doc=new DOMParser().parseFromString(await response.text(),'text/html'),next=doc.querySelector('.flash-card');
+        if(!next)throw Error('invalid flash card');
+        document.querySelector('.flash-card')?.replaceWith(document.importNode(next,true));
+        document.querySelector('[data-flash-refresh-error]')?.setAttribute('hidden','');
+        updateFlashClock();
+      }catch{
+        const note=document.querySelector('[data-flash-refresh-error]');
+        if(note){note.hidden=false;note.textContent='商品已加入购物袋，闪购更新失败，请刷新查看下一件商品。';}
+      }
+    });
   }
   document.addEventListener('click', event => {
     const jump = event.target.closest('[data-scroll-products]');

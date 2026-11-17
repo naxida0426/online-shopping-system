@@ -24,6 +24,9 @@ async function createOrder(userId, token, draft, shipping) {
     if (!draft || draft.token !== token || typeof draft.fingerprint !== "string") throw new OrderError("结算表单已失效，请重新核对购物车。");
     const [cartRows] = await connection.execute("SELECT id, product_id, quantity,flash_offer_id FROM cart_items WHERE user_id = ? ORDER BY product_id", [userId]);
     if (!cartRows.length) throw new OrderError("购物车为空，请先选择商品。");
+    // Lock all activity rows before products, matching flash add/rotation.
+    const offerIds=[...new Set(cartRows.map(item=>item.flash_offer_id).filter(Boolean))].sort((a,b)=>a-b);
+    for(const offerId of offerIds)await connection.execute('SELECT id FROM flash_offers WHERE id=? FOR SHARE',[offerId]);
     const lines = [];
     let total = 0n;
     let flashDiscount=0n;
@@ -38,7 +41,7 @@ async function createOrder(userId, token, draft, shipping) {
       if (reason) throw new OrderError(`${reason}，订单未创建，请返回购物车调整。`);
       let price=product.price;
       if(item.flash_offer_id){
-        const [[offer]]=await connection.execute('SELECT id FROM flash_offers WHERE id=? AND product_id=? AND expires_at>NOW() FOR SHARE',[item.flash_offer_id,item.product_id]);
+        const [[offer]]=await connection.execute('SELECT id FROM flash_offers WHERE id=? AND expires_at>NOW() FOR SHARE',[item.flash_offer_id]);
         if(offer)price=flashPrice(product.price);
       }
       const subtotal = toCents(price) * BigInt(item.quantity);

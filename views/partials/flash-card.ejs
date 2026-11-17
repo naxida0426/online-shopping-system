@@ -1,0 +1,5 @@
+<article class="flash-card"><h2>灵感闪购 <span class="sale-badge">8 折</span></h2>
+      <% if(flashOffer){ %><a class="flash-product-name" href="/products/<%= flashOffer.productId %>"><%= flashOffer.name %></a><div class="flash-prices"><del>¥<%= flashOffer.originalPrice %></del><strong>¥<%= flashOffer.price %></strong></div><div class="flash-time" data-flash-countdown data-expires-at="<%= flashOffer.expiresAt %>">--:--:--</div>
+      <% if(currentUser){ %><form action="/cart/items" method="post"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="productId" value="<%= flashOffer.productId %>"><input type="hidden" name="quantity" value="1"><input type="hidden" name="flashOfferId" value="<%= flashOffer.id %>"><button class="btn btn-brand" type="submit" data-flash-buy>八折抢购 ↗</button></form><% }else{ %><a class="btn btn-brand" href="/login?next=%2F">登录抢购 ↗</a><% } %>
+      <% }else{ %><p>今日闪购已售罄</p><a href="/products" class="btn btn-outline-brand">看看其他商品</a><% } %>
+    <p data-flash-refresh-error role="status" hidden></p></article>

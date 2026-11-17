@@ -51,6 +51,7 @@
         const link=document.createElement('a');link.href='/login?next=%2Fcart';link.className='btn btn-brand';link.textContent='登录 / 注册 ↗';section.append(title,text,link);content.replaceChildren(section);checkout.replaceChildren();checkout.hidden=true;return;
       }
       prepare(doc);if(!response.ok && !doc.querySelector('.cart-page>.alert'))throw Error('操作未完成，请重试。');
+      if((response.ok || response.status===409) && form?.elements.flashOfferId?.value)document.dispatchEvent(new CustomEvent('flash:refresh'));
     } catch(error){showError(error.message || '网络连接失败，请重试或打开完整购物车。');}
     finally {busy=false;content.setAttribute('aria-busy','false');if(submit?.isConnected)submit.disabled=wasDisabled;}
   }
