@@ -20,6 +20,7 @@ async function initializeDatabase() {
     for (const statement of statements) await connection.query(statement);
     await require("./migrate-bonus").migrateBonus(connection);
     await require("./migrate-auto-shipping").migrateAutoShipping(connection);
+    await require("./migrate-promotions").migratePromotions(connection);
     const [rows] = await connection.execute("SELECT COUNT(*) AS count FROM products WHERE is_demo = 1");
     console.log(`初始化完成：${requiredTables.length} 张业务表，当前有 ${rows[0].count} 件示例商品。`);
     console.log("重复执行不会覆盖已有商品的价格、库存或账号数据；不会创建默认管理员。");

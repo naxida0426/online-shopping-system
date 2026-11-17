@@ -15,7 +15,7 @@ function orderParams(options = {}) {
 const orderListUrl = (options = {}) => `/orders${orderParams(options)}`;
 const reviewUrl = (orderId, itemId, options = {}) => `/orders/${encodeURIComponent(orderId)}/items/${encodeURIComponent(itemId)}/review${orderParams(options)}`;
 function orderUrl(id, options = {}, action = "") {
-  if (!["", "pay", "cancel", "email", "receive"].includes(action)) throw new TypeError("无效的订单操作。");
+  if (!["", "pay", "cancel", "email", "receive", "coupon"].includes(action)) throw new TypeError("无效的订单操作。");
   return `/orders/${encodeURIComponent(id)}${action ? `/${action}` : ""}${orderParams(options)}`;
 }
 function orderPagination(total, requested, pageSize = 10) {

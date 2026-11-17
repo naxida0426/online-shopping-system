@@ -1,7 +1,9 @@
 <%- include('../partials/header') %>
-<main id="main-content" class="container-xl order-page">
+<main id="main-content" class="container-xl lab-page order-page">
+
+
   <div class="cart-heading"><h1>确认收货</h1><a class="btn btn-outline-brand" href="<%= orderUrl(order.id,browse) %>">返回订单</a></div>
-  <section class="order-card payment-card">
+  <section class="lab-panel order-card payment-card">
     <h2>请确认已收到全部商品</h2><p class="order-number"><%= order.orderNo %></p>
     <% order.items.forEach(item => { %><div class="checkout-item"><span><%= item.name %> × <%= item.quantity %></span><strong>¥<%= item.subtotal %></strong></div><% }) %>
     <p class="payment-notice">确认后订单将变为“已完成”，并进入该订单的商品评价列表。</p>

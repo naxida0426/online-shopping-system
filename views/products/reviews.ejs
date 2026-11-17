@@ -1,4 +1,4 @@
-<section class="order-card product-reviews" aria-labelledby="reviews-title">
+<section class="lab-panel order-card product-reviews" aria-labelledby="reviews-title">
   <h2 id="reviews-title">购买评价</h2>
   <% if (feedback.total) { %><p class="review-rating"><strong><%= feedback.average %> / 5</strong> · <%= feedback.total %> 条评价</p><% } else { %><p>暂无评价</p><% } %>
   <% feedback.reviews.forEach(review => { %><article class="order-review-item"><div class="review-heading"><strong><%= review.author %></strong><span><%= review.createdAt %></span></div><p class="review-rating"><%= '★'.repeat(review.rating) %><%= '☆'.repeat(5 - review.rating) %></p><p class="review-content"><%= review.content %></p></article><% }) %>

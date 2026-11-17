@@ -1,3 +1,5 @@
 <%- include('partials/header') %>
-<main id="main-content" class="container-xl message-page"><div class="message-card"><span class="message-icon"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#<%= icon %>"/></svg></span><h1><%= message %></h1><p><%= description %></p><a class="btn btn-brand" href="<%= typeof actionUrl === 'undefined' ? '/products' : actionUrl %>"><%= typeof actionLabel === 'undefined' ? '发现其他好物' : actionLabel %> <svg class="icon" aria-hidden="true"><use href="/images/icons.svg#arrow"/></svg></a></div></main>
+<main id="main-content" class="container-xl lab-page message-page">
+
+<div class="message-card"><span class="message-icon"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#<%= icon %>"/></svg></span><h1><%= message %></h1><p><%= description %></p><a class="btn btn-brand" href="<%= typeof actionUrl === 'undefined' ? '/products' : actionUrl %>"><%= typeof actionLabel === 'undefined' ? '发现其他好物' : actionLabel %> <svg class="icon" aria-hidden="true"><use href="/images/icons.svg#arrow"/></svg></a></div></main>
 <%- include('partials/footer') %>

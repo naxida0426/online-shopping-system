@@ -27,7 +27,7 @@ function mutation(work, notice) {
   };
 }
 
-router.post("/items", verifyCsrf, mutation(req => addItem(req.user.id, req.body.productId, req.body.quantity), "商品已加入购物车；重复加入的数量已合并。"));
+router.post("/items", verifyCsrf, mutation(req => addItem(req.user.id, req.body.productId, req.body.quantity,req.body.flashOfferId), "商品已加入购物车；重复加入的数量已合并。"));
 router.post("/items/:id/quantity", verifyCsrf, mutation(req => updateItem(req.user.id, req.params.id, req.body.quantity), "商品数量已更新。"));
 router.post("/items/:id/delete", verifyCsrf, mutation(req => removeItem(req.user.id, req.params.id), "商品已从购物车移除。"));
 

@@ -12,17 +12,22 @@ function smtpOptions(env = process.env) {
 }
 
 function confirmationMessage(order, items, from) {
-  return { from, to: order.email, subject: `拾光商城 · 订单 ${order.order_no} 模拟支付确认`,
-    messageId: `<shiguang-order-${order.id}@${from.split("@")[1]}>`,
-    text: [`这是一封课程演示订单确认邮件，未发生真实资金扣款。`, `订单编号：${order.order_no}`, `模拟支付金额：¥${order.total_amount}`,
-      ...items.map(item => `${item.product_name} × ${item.quantity}：¥${item.subtotal}`), "可登录商城查看订单详情。请勿向任何人提供密码或验证码。"].join("\n"),
+  return { from: { name: "VIBE LAB 灵感实验室", address: from }, to: order.email, subject: `VIBE LAB 灵感实验室 · 订单 ${order.order_no} 模拟支付确认`,
+    messageId: `<vibelab-order-${order.id}@${from.split("@")[1]}>`,
+    text: ["你好，感谢你在 VIBE LAB 灵感实验室选购。", "你的订单已完成模拟支付。未发生真实资金扣款。", "",
+      `订单编号：${order.order_no}`, `模拟支付金额：¥${order.total_amount}`, "", "商品明细：",
+      ...items.map(item => `${item.product_name} × ${item.quantity}：¥${item.subtotal}`),
+      ...(Number(order.flash_discount)>0?[`闪购已优惠：¥${order.flash_discount}`]:[]),
+      ...(Number(order.coupon_discount)>0?[`兑换码抵扣：¥${order.coupon_discount}`]:[]),
+      "", "登录 VIBE LAB 灵感实验室，在「订单档案」中查看订单详情。", "请勿向任何人提供密码或验证码。", "",
+      "VIBE LAB 灵感实验室", "此邮件由系统自动发送，请勿回复。"].join("\n"),
     disableFileAccess: true, disableUrlAccess: true };
 }
 
 async function deliverOrderEmail(userId, orderId, { transport, env = process.env } = {}) {
   const pool = getPool();
-  const [[order]] = await pool.execute(`SELECT o.id, o.order_no, o.total_amount, u.email, e.status FROM orders o
-    JOIN users u ON u.id = o.user_id JOIN order_emails e ON e.order_id = o.id
+  const [[order]] = await pool.execute(`SELECT o.id, o.order_no, o.total_amount, u.email, e.status,d.flash_discount,d.coupon_discount FROM orders o
+    JOIN users u ON u.id = o.user_id JOIN order_emails e ON e.order_id = o.id LEFT JOIN order_promotions d ON d.order_id=o.id
     WHERE o.id = ? AND o.user_id = ? AND o.payment_status = 'paid' AND o.order_status <> 'cancelled' AND u.status = 'active'`, [orderId, userId]);
   if (!order) return "unavailable";
   if (order.status === "sent") return "sent";

@@ -11,6 +11,7 @@ const MAX_ORDER_CENTS = 999999999999n; // orders.total_amount DECIMAL(12,2)
 const { OrderError } = require("../utils/order-error");
 const { paymentTimeoutSeconds } = require("../config/orders");
 const { expireOrders } = require("./orderExpiryService");
+const { flashPrice } = require('../utils/promotions');
 
 async function createOrder(userId, token, draft, shipping) {
   if (!validCheckoutToken(token)) throw new OrderError("结算表单已失效，请重新核对购物车。");
@@ -21,10 +22,11 @@ async function createOrder(userId, token, draft, shipping) {
     const [[existing]] = await connection.execute("SELECT id FROM orders WHERE user_id = ? AND checkout_token = ?", [userId, token]);
     if (existing) return existing.id;
     if (!draft || draft.token !== token || typeof draft.fingerprint !== "string") throw new OrderError("结算表单已失效，请重新核对购物车。");
-    const [cartRows] = await connection.execute("SELECT id, product_id, quantity FROM cart_items WHERE user_id = ? ORDER BY product_id", [userId]);
+    const [cartRows] = await connection.execute("SELECT id, product_id, quantity,flash_offer_id FROM cart_items WHERE user_id = ? ORDER BY product_id", [userId]);
     if (!cartRows.length) throw new OrderError("购物车为空，请先选择商品。");
     const lines = [];
     let total = 0n;
+    let flashDiscount=0n;
     // 商品按 ID 顺序锁定，分类使用共享锁，避免不同订单交叉等待商品锁。
     for (const item of cartRows) {
       const [[product]] = await connection.execute(
@@ -34,10 +36,16 @@ async function createOrder(userId, token, draft, shipping) {
       if (!product) throw new OrderError("商品已不存在，请返回购物车调整。");
       const reason = unavailableReason(product, item.quantity);
       if (reason) throw new OrderError(`${reason}，订单未创建，请返回购物车调整。`);
-      const subtotal = toCents(product.price) * BigInt(item.quantity);
+      let price=product.price;
+      if(item.flash_offer_id){
+        const [[offer]]=await connection.execute('SELECT id FROM flash_offers WHERE id=? AND product_id=? AND expires_at>NOW() FOR SHARE',[item.flash_offer_id,item.product_id]);
+        if(offer)price=flashPrice(product.price);
+      }
+      const subtotal = toCents(price) * BigInt(item.quantity);
+      flashDiscount+=(toCents(product.price)-toCents(price))*BigInt(item.quantity);
       total += subtotal;
       if (subtotal > MAX_ORDER_CENTS || total > MAX_ORDER_CENTS) throw new OrderError("订单金额超出系统范围，请减少商品数量。", 422);
-      lines.push({ id: item.id, productId: item.product_id, name: product.name, price: product.price, quantity: item.quantity, subtotal: formatCents(subtotal) });
+      lines.push({ id: item.id, productId: item.product_id, name: product.name, price, quantity: item.quantity, subtotal: formatCents(subtotal) });
     }
     if (cartFingerprint(lines) !== draft.fingerprint) throw new OrderError("商品价格或购物车已变化，请核对本页后再次提交。");
     const orderNo = `SG${randomUUID().replaceAll("-", "").slice(0, 30)}`;
@@ -45,6 +53,7 @@ async function createOrder(userId, token, draft, shipping) {
       `INSERT INTO orders (order_no, user_id, checkout_token, total_amount, recipient_name, recipient_phone, recipient_address, expires_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, DATE_ADD(CURRENT_TIMESTAMP, INTERVAL ? SECOND))`, [orderNo, userId, token, formatCents(total), values.recipientName, values.recipientPhone, values.recipientAddress, paymentTimeoutSeconds()]
     );
+    if(flashDiscount>0n)await connection.execute('INSERT INTO order_promotions(order_id,items_amount,flash_discount) VALUES(?,?,?)',[order.insertId,formatCents(total),formatCents(flashDiscount)]);
     for (const line of lines) {
       const [stock] = await connection.execute("UPDATE products SET stock = stock - ? WHERE id = ? AND stock >= ? AND status = 'active' AND deleted_at IS NULL", [line.quantity, line.productId, line.quantity]);
       if (stock.affectedRows !== 1) throw new OrderError("库存发生变化，订单未创建，请重新确认。");
@@ -81,10 +90,12 @@ async function getOwnOrder(userId, id) {
   if (!["string", "number"].includes(typeof id) || !isValidProductId(id)) return null;
   await expireOrders({ userId, orderId: Number(id) });
   const [[order]] = await getPool().execute(
-    `SELECT ${orderColumns}, o.recipient_name AS recipientName, o.recipient_phone AS recipientPhone,
+    `SELECT ${orderColumns}, COALESCE(d.items_amount,o.total_amount) AS itemsAmount,
+     COALESCE(d.flash_discount,0.00) AS flashDiscount,COALESCE(d.coupon_discount,0.00) AS couponDiscount,d.coupon_code AS couponCode,
+     o.recipient_name AS recipientName, o.recipient_phone AS recipientPhone,
      o.recipient_address AS recipientAddress, p.payment_no AS paymentNo, p.amount AS paymentAmount,
      p.status AS recordStatus, p.paid_at AS recordPaidAt, e.status AS emailStatus, e.attempts AS emailAttempts
-     FROM orders o LEFT JOIN payments p ON p.order_id = o.id LEFT JOIN order_emails e ON e.order_id = o.id
+     FROM orders o LEFT JOIN payments p ON p.order_id = o.id LEFT JOIN order_emails e ON e.order_id = o.id LEFT JOIN order_promotions d ON d.order_id=o.id
      WHERE o.id = ? AND o.user_id = ?`, [Number(id), userId]
   );
   if (!order) return null;
@@ -93,7 +104,7 @@ async function getOwnOrder(userId, id) {
      FROM order_items WHERE order_id = ? ORDER BY id`, [order.id]
   );
   const { paymentNo, paymentAmount, recordStatus, recordPaidAt, ...details } = order;
-  return { ...details, items, canReceive: order.orderStatus === "shipped" && order.paymentStatus === "paid", canPay: order.orderStatus === "pending" && order.paymentStatus === "unpaid",
+  return { ...details, originalAmount:formatCents(toCents(order.itemsAmount)+toCents(order.flashDiscount)), items, canReceive: order.orderStatus === "shipped" && order.paymentStatus === "paid", canPay: order.orderStatus === "pending" && order.paymentStatus === "unpaid",
     payment: paymentNo ? { paymentNo, amount: paymentAmount, status: recordStatus, paidAt: recordPaidAt } : null };
 }
 

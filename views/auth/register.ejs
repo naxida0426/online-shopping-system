@@ -1,7 +1,9 @@
 <%- include('../partials/header') %>
-<main id="main-content" class="container-xl auth-page">
-  <section class="auth-intro"><h1>从这里开始，<br>把喜欢带回日常。</h1><p>创建一个属于你的拾光账户。</p><a href="/products" class="auth-back text-action">探索商城 <span aria-hidden="true">→</span></a><div class="auth-illustration" aria-hidden="true"><img src="/images/mug.svg" alt="" width="320" height="320"></div></section>
-  <section class="auth-card" aria-labelledby="register-title"><h2 id="register-title">创建账户</h2><p class="auth-subtitle">已有账号？<a class="text-action" href="/login?next=<%= encodeURIComponent(nextUrl) %>">前往登录</a></p>
+<main id="main-content" class="container-xl lab-page auth-page">
+
+
+  <section class="auth-intro"><h1>JOIN THE LAB.<br>让日常更有料。</h1><p>创建一个属于你的实验室账户。</p><a href="/products" class="auth-back text-action">探索商城 <span aria-hidden="true">→</span></a><div class="auth-photo" aria-hidden="true"><img src="/images/electronics-keyboard.jpg" alt="" width="320" height="320"></div></section>
+  <section class="lab-panel auth-card" aria-labelledby="register-title"><h2 id="register-title">创建账户</h2><p class="auth-subtitle">已有账号？<a class="text-action" href="/login?next=<%= encodeURIComponent(nextUrl) %>">前往登录</a></p>
     <%- include('errors', { errors }) %>
     <form action="/register" method="post" class="auth-form">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="next" value="<%= nextUrl %>">
@@ -10,7 +12,7 @@
       <div class="mb-3"><label for="password" class="form-label">密码</label><input id="password" name="password" type="password" class="form-control" required minlength="8" maxlength="72" autocomplete="new-password" aria-describedby="password-help"><div id="password-help" class="form-text">至少 8 个字符，最多 72 个 UTF-8 字节；中文通常占 3 字节。</div></div>
       <div class="mb-4"><label for="confirm-password" class="form-label">确认密码</label><input id="confirm-password" name="confirmPassword" type="password" class="form-control" required minlength="8" maxlength="72" autocomplete="new-password"></div>
       <button type="submit" class="btn btn-brand w-100">注册账户 <span aria-hidden="true">→</span></button>
-      <p class="auth-note">暂不支持密码找回，请妥善保存密码。</p>
+
     </form>
   </section>
 </main>

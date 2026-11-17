@@ -1,5 +1,7 @@
 <%- include('../partials/header') %>
-<main id="main-content" class="container-xl order-page">
+<main id="main-content" class="container-xl lab-page order-page">
+
+
   <div class="cart-heading">
     <div>
 
@@ -8,10 +10,14 @@
     </div>
     <a class="btn btn-outline-brand" href="<%= orderUrl(order.id,browse) %>">返回订单</a>
   </div>
-  <section class="order-card payment-card">
+  <section class="lab-panel order-card payment-card">
     <h2>确认本次模拟支付</h2>
     <%- include('countdown') %>
     <p class="order-number">订单：<%= order.orderNo %></p>
+    <% if(notice){ %><div class="alert alert-success" role="status"><%= notice %></div><% } %>
+    <% if(errorMessage){ %><div class="alert alert-danger" role="alert"><%= errorMessage %></div><% } %>
+    <%- include('coupon-form',{couponReturn:'pay'}) %>
+    <%- include('discounts',{order}) %>
     <div class="cart-total"><span>订单金额</span><strong>¥<%= order.total %></strong></div>
     <p class="payment-notice">这是课程演示，不会产生真实扣款，也不需要银行卡、支付账号或验证码。</p>
     <form action="<%= orderUrl(order.id,browse,'pay') %>" method="post" class="payment-actions">
@@ -19,7 +25,7 @@
       <button class="btn btn-brand" name="outcome" value="success">模拟支付成功</button>
       <button class="btn btn-outline-brand" name="outcome" value="cancel">取消本次模拟支付</button>
     </form>
-    <p class="cart-summary-note">取消本次支付后，订单仍待支付，商品仅保留至支付截止时间。如不再需要，请在订单详情中取消订单。</p>
+
   </section>
 </main>
 <%- include('../partials/footer') %>

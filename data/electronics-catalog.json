@@ -1,0 +1,170 @@
+{
+  "categories": [
+    {
+      "slug": "digital",
+      "name": "声音实验室",
+      "order": 10
+    },
+    {
+      "slug": "home",
+      "name": "桌面美学",
+      "order": 20
+    },
+    {
+      "slug": "daily",
+      "name": "潮流穿戴",
+      "order": 30
+    },
+    {
+      "slug": "stationery",
+      "name": "影像实验室",
+      "order": 40
+    }
+  ],
+  "products": [
+    {
+      "previousSku": "DEMO-LAMP",
+      "sku": "VIBE-K1",
+      "name": "VIBE-K1 蓝调机械键盘",
+      "category": "home",
+      "price": "899.00",
+      "image": "electronics-keyboard.jpg",
+      "color": "stone",
+      "tag": "桌面主角",
+      "description": "深蓝键帽与紧凑布局，让每次敲击都成为桌面上的灵感节拍。\n选物方向：机械键盘 / 客制化键帽 / 紧凑桌面。\n课程展示商品，价格为模拟售价，图片展示外观风格。",
+      "photo": "1681140045438-2f24dfb93d2f"
+    },
+    {
+      "previousSku": "DEMO-MUG",
+      "sku": "VIBE-M1",
+      "name": "VIBE-M1 无线游戏鼠标",
+      "category": "home",
+      "price": "329.00",
+      "image": "electronics-mouse.jpg",
+      "color": "paper",
+      "tag": "轻装操控",
+      "description": "干净的白色机身，搭配黑色滚轮与侧键。把桌面留给专注，也留给游戏。\n选物方向：无线鼠标 / 白色桌搭 / 日常操控。\n课程展示商品，价格为模拟售价，图片展示外观风格。",
+      "photo": "1527814050087-3793815479db"
+    },
+    {
+      "previousSku": "DEMO-HEADPHONES",
+      "sku": "VIBE-H1",
+      "name": "VIBE-H1 头戴式无线耳机",
+      "category": "digital",
+      "price": "1299.00",
+      "image": "electronics-headphones.jpg",
+      "color": "stone",
+      "tag": "沉浸声场",
+      "description": "黑色包耳轮廓与柔软耳垫，给工作、通勤和私人歌单一个独立声场。\n选物方向：头戴耳机 / 无线聆听 / 桌面音频。\n课程展示商品，价格为模拟售价，图片展示外观风格。",
+      "photo": "1546435770-a3e426bf472b"
+    },
+    {
+      "previousSku": "DEMO-TOTE",
+      "sku": "VIBE-S1",
+      "name": "VIBE-S1 便携蓝牙音箱",
+      "category": "digital",
+      "price": "699.00",
+      "image": "electronics-speaker.jpg",
+      "color": "clay",
+      "tag": "随处开场",
+      "description": "织物包覆的圆柱机身，让音乐从桌面一路走向户外。聚会、旅行或独处，都有自己的背景声。\n选物方向：蓝牙音箱 / 便携音乐 / 生活声场。\n课程展示商品，价格为模拟售价，图片展示外观风格。",
+      "photo": "1608043152269-423dbba4e7e1"
+    },
+    {
+      "previousSku": "DEMO-NOTEBOOK",
+      "sku": "VIBE-W1",
+      "name": "VIBE-W1 智能运动腕表",
+      "category": "daily",
+      "price": "1599.00",
+      "image": "electronics-watch.jpg",
+      "color": "sand",
+      "tag": "腕上灵感",
+      "description": "方形屏幕、黑色表带，把科技感融入每天的穿搭。抬腕之间，开启属于自己的生活节奏。\n选物方向：智能腕表 / 运动穿戴 / 数字表盘。\n课程展示商品，价格为模拟售价，图片展示外观风格。",
+      "photo": "1546868871-7041f2a55e12"
+    },
+    {
+      "previousSku": "DEMO-CLOCK",
+      "sku": "VIBE-C1",
+      "name": "VIBE-C1 微单数码相机",
+      "category": "stationery",
+      "price": "5999.00",
+      "image": "electronics-camera.jpg",
+      "color": "stone",
+      "tag": "记录现场",
+      "description": "黑色机身与可换镜头，把街头光影、旅行片段和日常瞬间收入你的视觉档案。\n选物方向：微单相机 / 影像创作 / 日常摄影。\n课程展示商品，价格为模拟售价，图片展示外观风格。",
+      "photo": "1516035069371-29a1b244cc32"
+    },
+    {
+      "sku": "VIBE-A1",
+      "name": "VIBE-A1 播客动圈麦克风",
+      "category": "digital",
+      "price": "1299.00",
+      "stock": 28,
+      "image": "electronics-microphone.jpg",
+      "color": "stone",
+      "tag": "清晰发声",
+      "description": "黑色动圈麦克风搭配悬臂支架，让播客、直播和语音创作拥有自己的声音质感。\n选物方向：桌面收音 / 人声录制 / 播客创作。",
+      "photo": "1590602847861-f357a9332bbc"
+    },
+    {
+      "sku": "VIBE-N1",
+      "name": "VIBE-N1 轻薄笔记本电脑",
+      "category": "home",
+      "price": "6999.00",
+      "stock": 18,
+      "image": "electronics-laptop.jpg",
+      "color": "sand",
+      "tag": "移动工作站",
+      "description": "银色机身与简洁桌面相得益彰，把写作、设计与灵感收进随行的工作空间。\n选物方向：移动办公 / 轻薄机身 / 创作桌搭。",
+      "photo": "1496181133206-80ce9b88a853"
+    },
+    {
+      "sku": "VIBE-E1",
+      "name": "VIBE-E1 真无线蓝牙耳机",
+      "category": "daily",
+      "price": "399.00",
+      "stock": 55,
+      "image": "electronics-earbuds.jpg",
+      "color": "peach",
+      "tag": "随身节拍",
+      "description": "深色耳机配合随行充电盒，轻巧融入通勤与日常穿搭，把喜欢的歌随身带走。\n选物方向：无线聆听 / 轻装通勤 / 随行音乐。",
+      "photo": "1606220945770-b5b6c2c55bf1"
+    },
+    {
+      "sku": "VIBE-V1",
+      "name": "VIBE-V1 VR 沉浸式头显",
+      "category": "daily",
+      "price": "2499.00",
+      "stock": 16,
+      "image": "electronics-vr.jpg",
+      "color": "paper",
+      "tag": "穿戴新视界",
+      "description": "白色头显与环绕式头带，开启游戏、虚拟空间与沉浸体验的另一种观看方式。\n选物方向：VR 穿戴 / 沉浸娱乐 / 虚拟空间。",
+      "photo": "1622979135225-d2ba269cf1ac"
+    },
+    {
+      "sku": "VIBE-D1",
+      "name": "VIBE-D1 航拍无人机",
+      "category": "stationery",
+      "price": "3999.00",
+      "stock": 12,
+      "image": "electronics-drone.jpg",
+      "color": "sage",
+      "tag": "换个视角",
+      "description": "四旋翼机身搭载航拍相机，从空中记录山林、旅途与城市的另一面。\n选物方向：航拍创作 / 空中视角 / 旅行影像。",
+      "photo": "1473968512647-3e447244af8f"
+    },
+    {
+      "sku": "VIBE-L1",
+      "name": "VIBE-L1 大光圈变焦镜头",
+      "category": "stationery",
+      "price": "2699.00",
+      "stock": 22,
+      "image": "electronics-lens.jpg",
+      "color": "clay",
+      "tag": "光影捕手",
+      "description": "黑色镜身与变焦环，让街头、人像和日常场景拥有更多构图可能。\n选物方向：变焦镜头 / 光学影像 / 创作配件。",
+      "photo": "1617005082133-548c4dd27f35"
+    }
+  ]
+}

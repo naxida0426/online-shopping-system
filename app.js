@@ -65,7 +65,8 @@ app.get("/", async (req, res, next) => {
   try {
     const catalog = await getHomeCatalog(options);
     await require("./services/favoriteService").markFavorites(req.user?.id, catalog.products);
-    res.render("index", { title: "拾光商城 · 把喜欢带回日常", activePage: "home", query: options.query, ...catalog });
+    const flashOffer=await require('./services/promotionService').getFlashOffer();
+    res.render("index", { title: "拾光商城 · 把喜欢带回日常", activePage: "home", query: options.query, ...catalog,flashOffer });
   } catch (error) {
     next(error);
   }
@@ -74,6 +75,7 @@ app.get("/", async (req, res, next) => {
 app.use("/products", productRoutes);
 
 app.use("/cart", cartRoutes);
+app.use("/promotions", require("./routes/promotions"));
 app.use(orderRoutes);
 app.use("/admin", adminRoutes);
 

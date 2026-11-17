@@ -14,6 +14,7 @@ async function simulatePayment(userId, id, outcome) {
     if (outcome === "cancel") { if (p?.status !== "cancelled") await savePayment(c, o, p, "cancelled"); return "payment_cancelled"; }
     // 支付使用订单快照，不再次扣减库存；邮件任务与支付状态一同落库。
     await savePayment(c, o, p, "succeeded");
+    await c.execute('UPDATE promotion_codes SET redeemed_at=NOW() WHERE reserved_order_id=? AND user_id=? AND redeemed_at IS NULL',[o.id,userId]);
     await c.execute("UPDATE orders SET order_status = 'shipped', payment_status = 'paid', paid_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?", [o.id, userId]);
     await c.execute("INSERT INTO order_emails (order_id) VALUES (?) ON DUPLICATE KEY UPDATE order_id = order_emails.order_id", [o.id]);
     return "paid";

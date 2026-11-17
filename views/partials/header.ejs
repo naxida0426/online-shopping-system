@@ -1,44 +1,30 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="拾光商城，发现日常生活里的小美好。在线购物网站课程设计，MySQL 商品展示。">
-  <meta name="theme-color" content="#254b3c">
-  <title><%= title %></title>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="VIBE LAB 灵感实验室：探索电子装备，开启你的生活实验。"><meta name="theme-color" content="#CCFF00">
+  <title><%= title.replace(/拾光商城/g, 'VIBE LAB 灵感实验室') %></title>
   <link rel="icon" href="/images/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>if(window.tailwind)tailwind.config={corePlugins:{preflight:false}};</script>
   <link rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css">
-  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/vibe-lab.css">
+  <link rel="stylesheet" href="/css/cart-drawer.css">
+  <style>body{background-color:#F5F3EE;background-image:radial-gradient(#000 1px,transparent 1px);background-size:24px 24px}.hard-shadow{border:2px solid #000;box-shadow:4px 4px 0 #000}.font-mono{font-family:'JetBrains Mono',monospace}</style>
 </head>
 <body>
-  <a class="skip-link" href="#main-content">跳到主要内容</a>
-  <header class="site-header">
-    <nav class="navbar navbar-expand-lg container-xl" aria-label="主导航">
-      <a class="navbar-brand brand" href="/" aria-label="拾光商城首页"><span class="brand-mark"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#sun"/></svg></span><span><strong>拾光<span>商城</span></strong></span></a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#main-nav" aria-controls="main-nav" aria-expanded="false" aria-label="展开导航"><span class="navbar-toggler-icon"></span></button>
-      <div class="collapse navbar-collapse" id="main-nav">
-        <div class="navbar-nav main-nav"><a class="nav-link <%= activePage === 'home' ? 'active' : '' %>" href="/" <%- activePage === 'home' ? 'aria-current="page"' : '' %>>首页</a><a class="nav-link <%= activePage === 'products' ? 'active' : '' %>" href="/products" <%- activePage === 'products' ? 'aria-current="page"' : '' %>>发现好物</a></div>
-        <form class="search-form" action="/products" method="get" role="search" aria-label="全站商品搜索"><label class="visually-hidden" for="site-search">搜索商品</label><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#search"/></svg><input id="site-search" name="q" type="search" maxlength="100" placeholder="搜索你的心动好物" value="<%= query %>"><% if (typeof category !== 'undefined' && category !== 'all') { %><input type="hidden" name="category" value="<%= category %>"><% } %><button type="submit" aria-label="搜索">搜索</button></form>
-        <div class="header-actions">
-          <% const count = typeof cartQuantity === 'number' ? cartQuantity : 0; %>
-          <a href="/cart" class="cart-link <%= activePage === 'cart' ? 'active' : '' %>" <%- activePage === 'cart' ? 'aria-current="page"' : '' %> aria-label="购物车，<%= count %> 件商品"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#bag"/></svg><span>购物车</span><span class="cart-count" aria-hidden="true"><%= count %></span></a>
-          <% if (typeof currentUser !== 'undefined' && currentUser) { %>
-            <div class="dropdown account-menu">
-              <button type="button" class="account-link account-toggle dropdown-toggle <%= activePage === 'account' ? 'active' : '' %>" data-bs-toggle="dropdown" aria-expanded="false" aria-label="用户账户：<%= currentUser.username %>"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#user"/></svg><span class="account-name"><%= currentUser.username %></span></button>
-              <ul class="dropdown-menu dropdown-menu-end">
-                <li><a class="dropdown-item" href="/account">我的账户</a></li>
-                <li><a class="dropdown-item" href="/orders">我的订单</a></li>
-                <li><a class="dropdown-item" href="/account/addresses">收货地址簿</a></li>
-                <li><a class="dropdown-item" href="/account/favorites">我的收藏</a></li>
-                <% if (currentUser.role === 'admin') { %><li><a class="dropdown-item" href="/admin">管理后台</a></li><% } %>
-                <li><hr class="dropdown-divider"></li>
-                <li><form action="/logout" method="post"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="dropdown-item">退出登录</button></form></li>
-              </ul>
-            </div>
-          <% } else { %>
-            <a href="/login" class="account-link <%= activePage === 'login' ? 'active' : '' %>"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#user"/></svg>登录</a><span class="action-divider"></span><a href="/register" class="register-link">注册</a>
-          <% } %>
-        </div>
-      </div>
-    </nav>
-  </header>
+<a class="skip-link" href="#main-content">跳到主要内容</a>
+<header class="site-header">
+  <nav class="container-xl header-grid" aria-label="主导航">
+    <a class="brand" href="/" aria-label="VIBE LAB 灵感实验室首页"><span class="brand-mark"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#sun"/></svg></span><span><strong>VIBE LAB</strong></span></a>
+    <div class="main-nav"><a href="/" class="<%= activePage === 'home' ? 'active' : '' %>">实验室首页</a><a href="/products" class="<%= activePage === 'products' ? 'active' : '' %>">全部好物</a><a href="/orders">订单档案</a></div>
+    <form class="search-form" action="/products" method="get" role="search" aria-label="全站商品搜索"><label class="visually-hidden" for="site-search">搜索商品</label><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#search"/></svg><input id="site-search" name="q" type="search" maxlength="100" placeholder="搜索你的下一件灵感好物…" value="<%= query %>"><button type="submit">搜索</button></form>
+    <div class="header-actions"><% const count = typeof cartQuantity === 'number' ? cartQuantity : 0; %>
+      <a href="/cart" class="cart-link" aria-label="购物车，<%= count %> 件商品"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#bag"/></svg>购物袋 <span class="cart-count"><%= count %></span></a>
+      <% if (currentUser) { %><details class="account-menu"><summary><span class="account-email"><%= currentUser.email %></span></summary><div class="account-popover"><a href="/account">我的账户</a><a href="/account/addresses">收货地址簿</a><a href="/account/favorites">我的收藏</a><% if(currentUser.role === 'admin'){ %><a href="/admin">管理后台</a><% } %><form action="/logout" method="post"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-outline-brand" type="submit">退出登录</button></form></div></details>
+      <% } else { %><a class="account-link" href="/login">登录</a><a class="register-link" href="/register">注册 ↗</a><% } %>
+    </div>
+  </nav>
+</header>

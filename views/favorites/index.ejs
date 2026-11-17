@@ -1,8 +1,10 @@
 <%- include('../partials/header') %>
-<main id="main-content" class="container-xl order-page">
+<main id="main-content" class="container-xl lab-page order-page">
+
+
   <div class="cart-heading"><div><h1>我的收藏</h1><p>共 <%= pagination.total %> 件商品</p></div><a class="btn btn-outline-brand" href="/account">返回账户</a></div>
-  <% if (!products.length) { %><section class="order-card"><h2>还没有收藏商品</h2><a class="btn btn-brand" href="/products">去逛逛</a></section><% } %>
-  <div class="row g-4"><% products.forEach(product => { %><div class="col-12 col-sm-6 col-lg-4"><article class="order-card favorite-card">
+  <% if (!products.length) { %><section class="lab-panel order-card"><h2>还没有收藏商品</h2><a class="btn btn-brand" href="/products">去逛逛</a></section><% } %>
+  <div class="row g-4"><% products.forEach(product => { %><div class="col-12 col-sm-6 col-lg-4"><article class="lab-panel order-card favorite-card">
     <img src="<%= product.image %>" alt="<%= product.name %>" width="300" height="240" data-product-image>
     <h2><% if (product.available) { %><a href="/products/<%= product.id %>"><%= product.name %></a><% } else { %><%= product.name %><% } %></h2>
     <p><%= product.available ? '¥' + product.price : '商品已下架，暂不可购买' %></p>

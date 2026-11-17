@@ -1,18 +1,2 @@
 <%- include('../partials/header') %>
-<main id="main-content" class="container-xl catalog-page">
-  <nav aria-label="面包屑导航" class="shop-breadcrumb"><a href="/">首页</a><span aria-hidden="true">/</span><span aria-current="page">发现好物</span></nav>
-  <div class="catalog-intro">
-    <div><h1>发现你的日常好物</h1><p>从一件喜欢的小物开始，把日常过成自己的模样。</p></div>
-    <form action="/products" method="get" class="catalog-search" role="search" aria-label="列表商品搜索">
-      <label class="visually-hidden" for="catalog-search">在商品列表中搜索</label>
-      <input type="search" id="catalog-search" name="q" maxlength="100" value="<%= query %>" placeholder="试试台灯、马克杯、手账…">
-      <% if (category !== 'all') { %><input type="hidden" name="category" value="<%= category %>"><% } %>
-      <button type="submit" class="btn btn-brand"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#search"/></svg><span>搜索</span></button>
-    </form>
-  </div>
-  <%- include('../partials/category-nav') %>
-  <section class="products-section catalog-results" id="products" aria-labelledby="products-title">
-    <%- include('../partials/product-grid') %>
-  </section>
-</main>
-<%- include('../partials/footer') %>
+<main id="main-content" class="container-xl catalog-page"><nav class="shop-breadcrumb" aria-label="面包屑导航"><a href="/">实验室首页</a><span>/</span><span aria-current="page">灵感仓库</span></nav><div class="catalog-intro"><div><h1>你的灵感，<mark>这里有。</mark></h1></div><span class="archive-number mono"><%= String(pagination.total).padStart(3,'0') %></span></div><section class="catalog-shell" aria-label="商品浏览"><%- include('../partials/category-nav') %><section id="products" class="products-section" aria-label="商品列表"><%- include('../partials/product-grid') %></section></section></main><%- include('../partials/footer') %>

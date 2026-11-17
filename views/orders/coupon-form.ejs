@@ -1,0 +1,10 @@
+<% if(order.couponCode){ %>
+  <p class="applied-coupon">已使用兑换码 <strong class="mono"><%= order.couponCode %></strong></p>
+<% }else if(order.canPay){ %>
+  <form action="<%= orderUrl(order.id,browse,'coupon') %>" method="post" class="payment-coupon-form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <input type="hidden" name="returnView" value="<%= couponReturn %>">
+    <label for="payment-coupon" class="form-label">兑换码</label>
+    <div class="coupon-input"><input id="payment-coupon" name="couponCode" maxlength="32" required placeholder="输入兑换码" autocomplete="off"><button class="btn btn-outline-brand" type="submit">抵扣金额</button></div>
+  </form>
+<% } %>

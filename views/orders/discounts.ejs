@@ -1,0 +1,5 @@
+<% if(Number(order.flashDiscount)>0 || Number(order.couponDiscount)>0){ %><dl class="discount-breakdown">
+  <div><dt>商品原价</dt><dd class="mono">¥<%= order.originalAmount %></dd></div>
+  <% if(Number(order.flashDiscount)>0){ %><div><dt>闪购已优惠</dt><dd class="mono">−¥<%= order.flashDiscount %></dd></div><% } %>
+  <% if(Number(order.couponDiscount)>0){ %><div><dt>兑换码抵扣</dt><dd class="mono">−¥<%= order.couponDiscount %></dd></div><% } %>
+</dl><% } %>

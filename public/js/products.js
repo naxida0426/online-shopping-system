@@ -1,95 +1,101 @@
-// 图片文件丢失时显示通用占位图，不用其他商品的图片冒充。
+// Existing EJS responses are the source of truth; no new API or business rules.
 function prepareProductImages(root = document) {
-  root.querySelectorAll("img[data-product-image]").forEach(image => {
-    const fallback = () => {
-      if (image.getAttribute("src") !== "/images/product-placeholder.svg") image.src = "/images/product-placeholder.svg";
-    };
-    image.addEventListener("error", fallback);
-    // defer 脚本执行前可能已经发生图片加载失败。
-    if (image.complete && image.naturalWidth === 0) fallback();
+  root.querySelectorAll('img[data-product-image]').forEach(image => {
+    if (image.dataset.fallbackReady) return;
+    image.dataset.fallbackReady = 'true';
+    const fallback = () => { if (image.getAttribute('src') !== '/images/product-placeholder.svg') image.src = '/images/product-placeholder.svg'; };
+    image.addEventListener('error', fallback);
+    if (image.complete && !image.naturalWidth) fallback();
   });
 }
 prepareProductImages();
-
 (() => {
-  const categories = document.querySelector('.category-list');
   const results = document.getElementById('products');
-  if (!categories || !results) return;
-
-  let pending;
-  let revision = 0;
-  const previousRestoration = history.scrollRestoration;
-  history.scrollRestoration = 'manual';
-  window.addEventListener('pagehide', () => { history.scrollRestoration = previousRestoration; });
-  window.addEventListener('pageshow', () => { history.scrollRestoration = 'manual'; });
-
-  async function filterProducts(url, push = true) {
-    const currentRevision = ++revision;
-    pending?.abort();
-    pending = new AbortController();
-    results.setAttribute('aria-busy', 'true');
-    try {
-      const response = await fetch(url, { signal: pending.signal, headers: { Accept: 'text/html' } });
-      if (!response.ok) throw new Error('Catalog unavailable');
-      const page = new DOMParser().parseFromString(await response.text(), 'text/html');
-      const nextResults = page.getElementById('products');
-      const nextCategories = page.querySelector('.category-list');
-      if (!nextResults || !nextCategories) throw new Error('Invalid catalog response');
-      if (currentRevision !== revision) return;
-
-      // 保留视口所需的文档高度，并关闭 DOM 替换时的浏览器滚动锚定。
-      const root = document.documentElement;
-      root.style.overflowAnchor = 'none';
-      const reservedHeight = Math.max(0, window.scrollY + window.innerHeight - (root.scrollHeight - results.getBoundingClientRect().height));
-      results.style.minHeight = `${reservedHeight}px`;
-      results.replaceChildren(...nextResults.childNodes);
-      categories.querySelectorAll('a').forEach(link => {
-        const target = new URL(link.href);
-        const selected = [...nextCategories.querySelectorAll('a')].some(next =>
-          next.hasAttribute('aria-current') && new URL(next.getAttribute('href'), url).search === target.search);
-        link.classList.toggle('is-active', selected);
-        if (selected) link.setAttribute('aria-current', 'true');
-        else link.removeAttribute('aria-current');
-      });
-      const selectedLink = nextCategories.querySelector('a[aria-current]');
-      const category = selectedLink && new URL(selectedLink.getAttribute('href'), url).searchParams.get('category');
-      document.querySelectorAll('form[role="search"]').forEach(form => {
-        let input = form.querySelector('input[name="category"]');
-        if (!category) { input?.remove(); return; }
-        if (!input) {
-          input = document.createElement('input');
-          input.type = 'hidden';
-          input.name = 'category';
-          form.append(input);
-        }
-        input.value = category;
-      });
-      prepareProductImages(results);
-      if (push) history.pushState(null, '', url);
-    } catch (error) {
-      if (error.name === 'AbortError' || currentRevision !== revision) return;
-      const notice = results.querySelector('.demo-notice');
-      if (notice) {
-        notice.textContent = '商品筛选暂时失败，请重新点击分类重试。';
-        notice.setAttribute('role', 'alert');
-      }
-    } finally {
-      if (currentRevision === revision) results.removeAttribute('aria-busy');
-    }
+  const grid = document.querySelector('[data-product-grid]');
+  if (!results || !grid) return;
+  const categories = document.querySelector('.category-list');
+  const status = results.querySelector('[data-catalog-status]');
+  const search = document.getElementById('site-search');
+  const sort = document.getElementById('price-sort');
+  let selected = new URL(location.href).searchParams.get('category') || 'all';
+  let keyword = search.value;
+  let ready = false;
+  let loadPromise;
+  const originals = new Map();
+  grid.querySelectorAll('[data-product-id]').forEach(card => originals.set(card.dataset.productId,card));
+  function apply() {
+    const term = keyword.trim().toLocaleLowerCase();
+    const cards = [...originals.values()];
+    if (sort.value !== 'default') cards.sort((a,b) => (Number(a.dataset.price) - Number(b.dataset.price)) * (sort.value === 'asc' ? 1 : -1));
+    let count = 0;
+    cards.forEach(card => {
+      const show = (selected === 'all' || card.dataset.categoryId === selected) && (!term || card.dataset.search.toLocaleLowerCase().includes(term));
+      card.hidden = !show; if (show) count++; grid.append(card);
+      const updateLink = link => {
+        const url = new URL(link.href); url.search = '';
+        if (keyword.trim()) url.searchParams.set('q',keyword.trim());
+        if (selected !== 'all') url.searchParams.set('category',selected);
+        link.href = url.pathname + url.search;
+      };
+      card.querySelectorAll('a[href^="/products/"]').forEach(updateLink);
+      document.getElementById('product-'+card.dataset.productId)?.querySelectorAll('a[href^="/products/"]').forEach(updateLink);
+    });
+    categories.querySelectorAll('[data-category]').forEach(link => { const active = link.dataset.category === selected; link.classList.toggle('is-active', active); if (active) link.setAttribute('aria-current','true'); else link.removeAttribute('aria-current'); });
+    results.querySelector('[data-catalog-empty]').hidden = count > 0;
+    status.hidden = true;
+    status.replaceChildren();
+    results.querySelector('[data-catalog-count]').textContent = `${count} 件`;
+    search.value = keyword;
   }
-
-  document.addEventListener('click', event => {
-    const link = event.target.closest('a');
-    if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey ||
-        link.hasAttribute('download') || (link.target && link.target !== '_self')) return;
-    const url = new URL(link.href);
-    if (url.origin !== location.origin || !['/', '/products', '/products/'].includes(url.pathname)) return;
-    if (!categories.contains(link) && !results.contains(link)) return;
-    event.preventDefault();
-    url.hash = '';
-    // 首页筛选保留首页结构；刷新和前进后退也使用同一路径。
-    url.pathname = location.pathname;
-    filterProducts(url);
+  function saveUrl() {
+    const url = new URL(location.href); url.search = ''; if (keyword.trim()) url.searchParams.set('q', keyword.trim()); if (selected !== 'all') url.searchParams.set('category', selected); if (sort.value !== 'default') url.searchParams.set('sort', sort.value); history.replaceState(null, '', url);
+  }
+  async function loadAll() {
+    if (ready) return true;
+    if (loadPromise) return loadPromise;
+    loadPromise = (async () => {
+      results.setAttribute('aria-busy', 'true');
+      status.hidden = true;
+      try {
+        const fresh = new Map(); const previews = new Map(); let pages = 1;
+        for (let page = 1; page <= pages; page++) {
+          const response = await fetch(`/products?page=${page}`, {headers:{Accept:'text/html'}});
+          if (!response.ok) throw new Error('加载失败');
+          const doc = new DOMParser().parseFromString(await response.text(), 'text/html');
+          const nextGrid = doc.querySelector('[data-product-grid]');
+          if (!nextGrid) throw new Error('商品响应无效');
+          pages = Number(nextGrid.dataset.pages);
+          if (!Number.isSafeInteger(pages) || pages < 1) throw new Error('分页信息无效');
+          nextGrid.querySelectorAll('[data-product-id]').forEach(card => fresh.set(card.dataset.productId, document.importNode(card,true)));
+          doc.querySelectorAll('[data-previews]>.modal').forEach(modal => previews.set(modal.id, document.importNode(modal,true)));
+        }
+        originals.clear(); fresh.forEach((card,id) => originals.set(id,card));
+        grid.replaceChildren(...fresh.values());
+        results.querySelector('[data-previews]').replaceChildren(...previews.values());
+        results.querySelector('.catalog-pagination')?.setAttribute('hidden','');
+        ready = true; grid.dataset.catalogReady = 'true'; prepareProductImages(results); apply(); return true;
+      } catch {
+        status.hidden = false;
+        status.replaceChildren(document.createTextNode('完整仓库加载失败，仍可使用原有分页和搜索。 '));
+        const retry = document.createElement('button'); retry.type = 'button'; retry.className = 'text-action'; retry.textContent = '重试加载'; retry.addEventListener('click',loadAll); status.append(retry); return false;
+      } finally { results.removeAttribute('aria-busy'); loadPromise = null; }
+    })();
+    return loadPromise;
+  }
+  document.addEventListener('click', async event => {
+    const link = event.target.closest('[data-category],[data-header-category]');
+    if (!link || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    event.preventDefault(); if (!await loadAll()) { location.href = link.href; return; }
+    selected = link.dataset.category || link.dataset.headerCategory; apply(); saveUrl();
+    categories.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
   });
-  window.addEventListener('popstate', () => filterProducts(new URL(location.href), false));
+  document.querySelectorAll('form[role=search]').forEach(form => {
+    form.addEventListener('submit', event => { if (!ready) return; event.preventDefault(); keyword = form.querySelector('[name=q]').value; apply(); saveUrl(); });
+    const input = form.querySelector('[name=q]'); let delay;
+    input.addEventListener('input', () => { if (!ready) return; clearTimeout(delay); delay = setTimeout(() => { keyword = input.value; apply(); saveUrl(); },160); });
+  });
+  sort.addEventListener('change',async () => { if (await loadAll()) { apply(); saveUrl(); } });
+  const initialSort = new URL(location.href).searchParams.get('sort'); if (['asc','desc'].includes(initialSort)) sort.value = initialSort;
+  window.addEventListener('popstate', () => { const params = new URL(location.href).searchParams; selected = params.get('category') || 'all'; keyword = params.get('q') || ''; sort.value = ['asc','desc'].includes(params.get('sort')) ? params.get('sort') : 'default'; if (ready) apply(); });
+  loadAll();
 })();

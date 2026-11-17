@@ -30,6 +30,7 @@ async function closeUnpaidOrder(c, o, p, reason) {
     await c.execute("UPDATE products SET stock = stock + ? WHERE id = ?", [item.quantity, item.product_id]);
   }
   await savePayment(c, o, p, "cancelled");
+  await c.execute('UPDATE promotion_codes SET reserved_order_id=NULL WHERE reserved_order_id=? AND redeemed_at IS NULL',[o.id]);
   await c.execute(`UPDATE orders SET order_status = 'cancelled', payment_status = 'cancelled',
     cancelled_at = CURRENT_TIMESTAMP, cancel_reason = ? WHERE id = ?`, [reason, o.id]);
 }

@@ -80,7 +80,7 @@ module.exports = async function verifyCatalog(t, { pool, base }) {
       assert.equal(response.status, 200);
       const html = await response.text();
       assert.ok(html.includes('aria-label="第 2 页，当前页"'));
-      assert.ok(html.includes("展示 7–7 件"));
+      assert.ok(html.includes('data-catalog-count>共 7 件'));
       const match = html.match(/href="(\/products\/\d+\?[^\"]+)"/);
       assert.ok(match, "应存在包含筛选信息的详情链接");
       const detailUrl = new URL(match[1].replaceAll("&amp;", "&"), base);

@@ -1,19 +1,6 @@
-<article class="product-card">
-  <a class="product-visual <%= product.color %>" href="<%= productUrl(product.id, query, category, pagination.page) %>" aria-label="查看<%= product.name %>详情">
-    <span class="product-tag"><%= product.tag %></span>
-    <img src="<%= product.image %>" alt="<%= product.name %>插画" width="480" height="350" loading="lazy" data-product-image>
-    <span class="visual-open"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#arrow"/></svg></span>
-  </a>
-  <div class="product-info">
-    <span class="product-category"><%= product.categoryName %> <span>· <%= product.isDemo ? '示例商品' : '商品展示' %></span></span>
-    <h3><a href="<%= productUrl(product.id, query, category, pagination.page) %>"><%= product.name %></a></h3>
-    <p class="product-description-short"><%= product.description %></p>
-    <div class="product-bottom">
-      <span class="price"><span>¥</span><%= product.price %></span>
-      <button type="button" class="preview-button" data-bs-toggle="modal" data-bs-target="#product-<%= product.id %>">
-        快速预览 <svg class="icon" aria-hidden="true"><use href="/images/icons.svg#expand"/></svg>
-      </button>
-    </div>
-    <%- include('favorite-button', { product }) %>
-  </div>
-</article>
+<article class="product-card" data-product-id="<%= product.id %>" data-category-id="<%= product.categoryId %>" data-price="<%= product.price %>" data-search="<%= product.name + ' ' + product.description + ' ' + product.categoryName + ' ' + product.sku %>">
+<a class="product-visual <%= product.color %>" href="<%= productUrl(product.id,query,category,pagination.page) %>"><span class="product-tag"><%= product.tag %></span><img src="<%= product.image %>" alt="<%= product.name %>" width="480" height="350" loading="lazy" data-product-image><span class="visual-open" aria-hidden="true">↗</span></a>
+<div class="product-info"><div class="product-meta"><span class="product-category"><%= product.categoryName %></span><span class="stock-status <%= product.stock ? '' : 'is-empty' %>"><%= product.stock ? '库存：'+product.stock+' 件' : '暂时缺货' %></span></div><h3><a href="<%= productUrl(product.id,query,category,pagination.page) %>"><%= product.name %></a></h3><p class="product-description-short"><%= product.description %></p>
+<%- include('swatches',{product}) %>
+<div class="product-bottom"><span class="price"><small>¥</small><%= product.price %></span><button type="button" class="preview-button" data-bs-toggle="modal" data-bs-target="#product-<%= product.id %>">快速预览 ↗</button></div>
+<div class="card-actions"><% if(!product.stock){ %><button class="btn btn-brand" disabled>暂时缺货</button><% }else if(currentUser){ %><form action="/cart/items" method="post"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="productId" value="<%= product.id %>"><input type="hidden" name="quantity" value="1"><button type="submit" class="btn btn-brand">加入购物车 ＋</button></form><% }else{ %><a class="btn btn-brand" href="/login?next=<%= encodeURIComponent(productUrl(product.id)) %>">登录后加购 ＋</a><% } %><%- include('favorite-button',{product}) %></div></div></article>

@@ -2,7 +2,7 @@ require("./environment");
 const mysql = require("mysql2/promise");
 const { readDatabaseConfig } = require("./database-config");
 
-const requiredTables = ["users", "categories", "products", "cart_items", "orders", "order_items", "payments", "sessions", "order_emails", "addresses", "favorites", "reviews"];
+const requiredTables = ["users", "categories", "products", "cart_items", "orders", "order_items", "payments", "sessions", "order_emails", "addresses", "favorites", "reviews", "flash_offers", "promotion_codes", "order_promotions"];
 let pool;
 
 function getPool() {
@@ -39,6 +39,8 @@ async function checkDatabase() {
       error.code = "DB_SCHEMA_MISSING";
       throw error;
     }
+    const [promotionColumns]=await connection.execute("SELECT column_name FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='cart_items' AND column_name='flash_offer_id'");
+    if(!promotionColumns.length){const error=new Error('促销表结构需要升级。');error.code='DB_SCHEMA_MISSING';throw error;}
     return { connected: true, tables: requiredTables.length };
   } finally {
     connection.release();

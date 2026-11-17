@@ -2,6 +2,7 @@ const { getPool } = require("../config/db");
 const { isValidProductId } = require("../utils/catalog");
 const { toCents, formatCents } = require("../utils/money");
 const { withUserTransaction } = require("../config/transaction");
+const { flashPrice } = require('../utils/promotions');
 
 class CartError extends Error {
   constructor(message, status = 422) { super(message); this.status = status; }
@@ -29,21 +30,23 @@ function unavailableReason(row, quantity) {
 async function getCart(userId) {
   const [rows] = await getPool().execute(
     `SELECT ci.id, ci.product_id, ci.quantity, p.name, p.sku, p.price, p.stock, p.image_path,
-            p.is_demo, p.status, p.deleted_at, c.is_active
+            p.is_demo, p.status, p.deleted_at, c.is_active,
+            (f.id IS NOT NULL AND f.product_id=p.id AND f.expires_at>NOW()) AS flash_active, ci.flash_offer_id
      FROM cart_items ci JOIN products p ON p.id = ci.product_id JOIN categories c ON c.id = p.category_id
-     WHERE ci.user_id = ? ORDER BY ci.id DESC`, [userId]
+     LEFT JOIN flash_offers f ON f.id=ci.flash_offer_id WHERE ci.user_id = ? ORDER BY ci.id DESC`, [userId]
   );
   let total = 0n;
   let quantity = 0;
   let validQuantity = 0;
   const items = rows.map(row => {
     const reason = unavailableReason(row, row.quantity);
-    const subtotal = toCents(row.price) * BigInt(row.quantity);
+    const price=row.flash_active?flashPrice(row.price):row.price;
+    const subtotal = toCents(price) * BigInt(row.quantity);
     quantity += row.quantity;
     if (!reason) { total += subtotal; validQuantity += row.quantity; }
     return {
       id: row.id, productId: row.product_id, name: row.name, sku: row.sku, quantity: row.quantity,
-      price: row.price, subtotal: formatCents(subtotal), stock: row.stock, isDemo: Boolean(row.is_demo),
+      price, originalPrice:row.price,isFlashSale:Boolean(row.flash_active),flashExpired:Boolean(row.flash_offer_id&&!row.flash_active), subtotal: formatCents(subtotal), stock: row.stock, isDemo: Boolean(row.is_demo),
       image: /^\/images\/[a-zA-Z0-9_-][a-zA-Z0-9_.-]*$/.test(row.image_path) ? row.image_path : "/images/product-placeholder.svg",
       available: !reason, reason,
       canUpdate: row.status === "active" && !row.deleted_at && Boolean(row.is_active) && row.stock > 0,
@@ -69,18 +72,24 @@ function checkQuantity(product, quantity) {
   if (quantity > 999) throw new CartError("每种商品最多保存 999 件，请先调整购物车数量。", 409);
 }
 
-async function addItem(userId, productValue, quantityValue) {
+async function addItem(userId, productValue, quantityValue, flashOfferValue) {
   const productId = readId(productValue);
   const quantity = readQuantity(quantityValue);
   return withUserTransaction(userId, async connection => {
     const product = await lockProduct(connection, productId);
+    let offerId=null;
+    if(flashOfferValue!==undefined && flashOfferValue!==''){
+      offerId=readId(flashOfferValue);
+      const [[offer]]=await connection.execute('SELECT id FROM flash_offers WHERE id=? AND product_id=? AND expires_at>NOW() FOR SHARE',[offerId,productId]);
+      if(!offer)throw new CartError('闪购已结束或商品不匹配，请刷新首页。',409);
+    }
     const [rows] = await connection.execute("SELECT id, quantity FROM cart_items WHERE user_id = ? AND product_id = ? FOR UPDATE", [userId, productId]);
     const nextQuantity = (rows[0]?.quantity || 0) + quantity;
     checkQuantity(product, nextQuantity);
     if (rows.length) {
-      await connection.execute("UPDATE cart_items SET quantity = ? WHERE id = ? AND user_id = ?", [nextQuantity, rows[0].id, userId]);
+      await connection.execute("UPDATE cart_items SET quantity = ?,flash_offer_id=COALESCE(?,flash_offer_id) WHERE id = ? AND user_id = ?", [nextQuantity,offerId, rows[0].id, userId]);
     } else {
-      await connection.execute("INSERT INTO cart_items (user_id, product_id, quantity) VALUES (?, ?, ?)", [userId, productId, quantity]);
+      await connection.execute("INSERT INTO cart_items (user_id, product_id, quantity,flash_offer_id) VALUES (?, ?, ?,?)", [userId, productId, quantity,offerId]);
     }
   });
 }

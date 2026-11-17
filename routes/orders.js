@@ -105,7 +105,7 @@ router.post("/orders/:id/receive", verifyCsrf, async (req, res, next) => {
     next(error);
   }
 });
-const notices = { order_expired: "订单已超时自动关闭，库存已恢复，请重新下单。", paid: "模拟支付成功，未发生真实扣款。订单已自动发货，请确认收货后评价。", already_paid: "此前已完成模拟支付，未重复处理。", payment_cancelled: "已取消本次支付，订单仍待支付；取消订单才会恢复库存。", order_cancelled: "订单已取消，库存已恢复。", already_cancelled: "此前已取消，未重复恢复库存。" };
+const notices = { coupon_applied: "兑换码已应用，支付金额已更新。", order_expired: "订单已超时自动关闭，库存已恢复，请重新下单。", paid: "模拟支付成功，未发生真实扣款。订单已自动发货，请确认收货后评价。", already_paid: "此前已完成模拟支付，未重复处理。", payment_cancelled: "已取消本次支付，订单仍待支付；取消订单才会恢复库存。", order_cancelled: "订单已取消，库存已恢复。", already_cancelled: "此前已取消，未重复恢复库存。" };
 function orderAction(work, sendEmail = false) {
   return async (req, res, next) => {
     try {
@@ -125,6 +125,14 @@ function orderAction(work, sendEmail = false) {
   };
 }
 router.post("/orders/:id/pay", verifyCsrf, orderAction(req => simulatePayment(req.user.id, req.params.id, req.body.outcome), true));
+router.post('/orders/:id/coupon',verifyCsrf,async(req,res,next)=>{
+  const view=req.body.returnView==='show'?'show':'pay';
+  try{
+    const result=await require('../services/promotionService').applyCode(req.user.id,req.params.id,req.body.couponCode);
+    req.session.orderNotice={id:Number(req.params.id),text:result==='order_expired'?'订单已超时关闭。':'兑换码已应用，支付金额已更新。'};
+    await sessionAction(req,'save');res.redirect(303,orderUrl(req.params.id,readOrderOptions(req.query),result==='order_expired'||view==='show'?'':'pay'));
+  }catch(error){if(error instanceof OrderError)return renderOrder(req,res,{status:error.status,errorMessage:error.message,view});next(error);}
+});
 router.post("/orders/:id/cancel", verifyCsrf, orderAction(req => {
   if (req.body.confirmCancel !== "yes") throw new OrderError("请先查看说明，再确认取消订单。", 422);
   return cancelOrder(req.user.id, req.params.id);

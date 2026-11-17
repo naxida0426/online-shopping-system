@@ -1,7 +1,9 @@
 <%- include('../partials/header') %>
-<main id="main-content" class="container-xl auth-page">
-  <section class="auth-intro"><h1>欢迎回来，<br>继续发现日常好物。</h1><p>登录拾光，发现生活中的每一份喜欢。</p><a href="/products" class="auth-back text-action">先去逛逛 <span aria-hidden="true">→</span></a><div class="auth-illustration" aria-hidden="true"><img src="/images/lamp.svg" alt="" width="320" height="320"></div></section>
-  <section class="auth-card" aria-labelledby="login-title"><h2 id="login-title">登录</h2><p class="auth-subtitle">还没有账号？<a class="text-action" href="/register?next=<%= encodeURIComponent(nextUrl) %>">创建新账户</a></p>
+<main id="main-content" class="container-xl lab-page auth-page">
+
+
+  <section class="auth-intro"><h1>WELCOME BACK.<br>灵感继续发生。</h1><p>进入实验室，发现生活中的每一份喜欢。</p><a href="/products" class="auth-back text-action">先去逛逛 <span aria-hidden="true">→</span></a><div class="auth-photo" aria-hidden="true"><img src="/images/electronics-headphones.jpg" alt="" width="320" height="320"></div></section>
+  <section class="lab-panel auth-card" aria-labelledby="login-title"><h2 id="login-title">登录</h2><p class="auth-subtitle">还没有账号？<a class="text-action" href="/register?next=<%= encodeURIComponent(nextUrl) %>">创建新账户</a></p>
     <% if (registered) { %><div class="alert alert-success" role="status">注册成功，请使用刚刚的账号登录。</div><% } %>
     <%- include('errors', { errors }) %>
     <form action="/login" method="post" class="auth-form">

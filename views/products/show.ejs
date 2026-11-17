@@ -1,5 +1,7 @@
 <%- include('../partials/header') %>
-<main id="main-content" class="container-xl detail-page">
+<main id="main-content" class="container-xl lab-page detail-page">
+
+
   <nav aria-label="面包屑导航" class="shop-breadcrumb">
     <a href="/">首页</a><span aria-hidden="true">/</span><a href="/products">全部商品</a><span aria-hidden="true">/</span>
     <a href="<%= shopUrl('', product.categoryId) %>"><%= product.categoryName %></a><span aria-hidden="true">/</span><span aria-current="page"><%= product.name %></span>
@@ -13,7 +15,7 @@
       </div>
     </div>
     <div class="col-lg-6 detail-copy">
-      <span class="eyebrow"><%= product.categoryName %> · <%= product.isDemo ? '示例商品' : '商品详情' %></span>
+
       <h1 id="detail-title"><%= product.name %></h1>
       <p class="detail-lead"><%= product.description %></p>
       <div class="detail-price"><span><%= product.isDemo ? '示例价' : '商品价格' %></span><strong><small>¥</small><%= product.price %></strong></div>
@@ -22,7 +24,7 @@
         <div><dt>商品编号</dt><dd><%= product.sku %></dd></div>
         <div><dt><%= product.isDemo ? '示例库存' : '当前库存' %></dt><dd><span class="stock-status <%= product.stock === 0 ? 'is-empty' : '' %>"><%= product.stock > 0 ? '有货' : '暂时缺货' %></span><span class="detail-stock-count"><%= product.stock %> 件</span></dd></div>
       </dl>
-      <%- include('../partials/favorite-button', { product }) %>
+      <%- include('../partials/swatches', { product }) %><%- include('../partials/favorite-button', { product }) %>
       <div class="detail-actions">
         <% if (product.stock === 0) { %><button class="btn btn-brand" type="button" disabled>暂时缺货</button>
         <% } else if (!currentUser) { %><a class="btn btn-brand" href="<%= loginUrl %>">登录后加入购物车</a>
@@ -35,7 +37,7 @@
         <% } %>
         <a class="btn btn-outline-brand" href="<%= backUrl %>">继续选购</a>
       </div>
-      <div class="demo-notice detail-notice"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#info"/></svg><span>下单时扣减库存。支付为课程模拟，不涉及真实扣款。</span></div>
+
     </div>
   </article>
   <%- include('reviews') %>

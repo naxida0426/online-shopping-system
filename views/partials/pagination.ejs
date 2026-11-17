@@ -1,8 +1,8 @@
 <% if (pagination.wasAdjusted) { %>
-  <p class="catalog-hint" role="status">页码超出范围，已显示第 <%= pagination.page %> 页。</p>
+  <p class="catalog-hint mono" role="status">页码超出范围，已显示第 <%= pagination.page %> 页。</p>
 <% } %>
 <% if (pagination.totalPages > 1) { %>
-  <div class="catalog-pagination">
+  <div class="catalog-pagination lab-pagination">
     <p>第 <%= pagination.page %> / <%= pagination.totalPages %> 页 · 共 <%= pagination.total %> 件商品</p>
     <nav aria-label="商品分页">
       <ul class="pagination mb-0">

@@ -30,7 +30,7 @@ test("真实 MySQL：初始化、约束、参数化查询、HTTP 与跨进程持
       assert.equal(lamp.stock, 17);
       const [[counts]] = await pool.execute("SELECT COUNT(*) AS count FROM products WHERE is_demo = 1");
       assert.equal(counts.count, 6);
-      assert.equal((await checkDatabase()).tables, 12);
+      assert.equal((await checkDatabase()).tables, 15);
     });
 
     await t.test("商品查询来自数据库，下架、组合筛选和注入输入得到正确处理", async () => {
@@ -120,6 +120,9 @@ test("真实 MySQL：初始化、约束、参数化查询、HTTP 与跨进程持
     });
     await t.test("账号注销、事务回滚及会话撤销", async subtest => {
       await require("./account-deletion-integration")(subtest, { pool, base: `http://127.0.0.1:${server.address().port}` });
+    });
+    await t.test('闪购八折与兑换码真实抵扣',async subtest=>{
+      await require('./promotions-integration')(subtest,{pool,base:`http://127.0.0.1:${server.address().port}`});
     });
     await t.test("账户注册、登录与持久会话", async subtest => {
       await require("./auth-integration")(subtest, { pool, base: `http://127.0.0.1:${server.address().port}` });

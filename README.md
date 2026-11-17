@@ -1,6 +1,6 @@
-# 拾光商城
+# VIBE LAB 灵感实验室
 
-基于 Node.js、Express、EJS 和 MySQL 的在线购物系统，包含顾客购物流程、商品与订单管理、销售统计及订单确认邮件。页面以中文为主，支持桌面和移动设备。
+基于 Node.js、Express、EJS 和 MySQL 的电子产品商城，采用新粗野主义视觉设计，包含 12 款不同商品、四个分类、侧拉购物袋、每日八折闪购、兑换码抵扣及订单确认邮件。页面以中文为主，支持桌面和移动设备。
 
 支付为课程模拟，不接入真实支付平台。
 
@@ -8,9 +8,10 @@
 
 | 模块 | 功能 |
 | --- | --- |
-| 商品浏览 | 分类、关键词搜索、分页、商品详情、快速预览 |
+| 商品浏览 | 12 款电子商品、四分类、顶部实时搜索、全量价格排序、详情和快速预览 |
 | 用户账户 | 注册、用户名或邮箱登录、退出、账户信息、持久会话、账号注销 |
-| 购物车 | 添加、修改数量、删除、库存检查、金额计算 |
+| 购物车 | 侧拉购物袋、添加、修改数量、删除、库存检查、金额计算 |
+| 闪购与兑换码 | 每日随机一款八折商品、领取 ¥50–100 兑换码、订单详情及支付页抵扣 |
 | 订单 | 收货信息、订单快照、事务扣库存、重复提交防护、历史查询 |
 | 模拟支付 | 模拟付款、取消本次支付、取消未支付订单并恢复库存 |
 | 超时关闭 | 默认 30 分钟支付期限、倒计时、自动关闭与库存回补 |
@@ -25,7 +26,7 @@
 
 - 服务端：Node.js、Express 5、EJS
 - 数据库：MySQL 8、mysql2、InnoDB 事务
-- 前端：Bootstrap 5、原生 JavaScript、Chart.js
+- 前端：Tailwind CDN、Bootstrap 5 布局与弹窗、原生 JavaScript、Chart.js
 - 账户：express-session、MySQL 会话存储、bcryptjs、CSRF 校验、登录限流
 - 邮件：Nodemailer
 
@@ -38,6 +39,7 @@
 ```powershell
 npm install
 npm run mysql:setup
+node scripts/apply-electronics-catalog.js
 npm start
 ```
 
@@ -62,11 +64,12 @@ npm start
 npm install
 npm run session:setup
 npm run db:init
+node scripts/apply-electronics-catalog.js
 npm run db:check
 npm start
 ```
 
-初始化创建 12 张表、4 个分类和 6 件示例商品，不创建默认用户或管理员。详见 [数据库配置](docs/database.md)。
+初始化创建 15 张表、4 个分类和基础示例商品；上述目录脚本将示例商品转换并扩充为 12 款电子产品，不创建默认用户或管理员。详见 [数据库配置](docs/database.md)与[电子产品目录](docs/electronics-catalog.md)。
 
 ### 版本更新
 
@@ -74,12 +77,14 @@ npm start
 
 ```powershell
 npm install
-npm run db:init
+node scripts/migrate-promotions.js
 npm run db:check
 npm start
 ```
 
-`db:init` 可重复执行，保留已有商品、账户和订单数据，并补齐地址簿表、订单截止时间、关闭原因及索引。初始化账号需要 ALTER 权限。旧待支付订单按“创建时间 + 30 分钟”设置截止时间，网站重启后自动关闭已超时订单并恢复库存。
+本版从已有完整购物系统升级时，使用促销迁移脚本补充三张促销表及购物车活动字段；初始化账号需要 CREATE 和 ALTER 权限。若尚未切换电子商品目录，执行 `node scripts/apply-electronics-catalog.js`；已有六款电子商品的环境仅执行 `node scripts/expand-electronics-catalog.js`，不会重置原商品及分类。不要在已转换目录中重复导入旧种子商品。更早版本须先按原版本说明补齐基础表结构。
+
+闪购价格、兑换码归属、抵扣、核销与释放均由后端处理，订单、支付记录与邮件使用相同金额。详见[促销规则与部署](docs/promotions.md)。
 
 ## 环境变量
 

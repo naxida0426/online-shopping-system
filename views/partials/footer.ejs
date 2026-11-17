@@ -1,9 +1,6 @@
-  <footer class="site-footer"><div class="container-xl">
-    <div class="footer-top"><div><a class="brand footer-brand" href="/"><span class="brand-mark"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#sun"/></svg></span><strong>拾光商城</strong></a></div><nav aria-label="页脚导航"><a href="/">首页</a><a href="/products">精选好物</a><a href="/login">登录 / 注册</a><a href="/cart">购物车</a></nav></div>
-    <div class="footer-bottom"><span>© <%= year %> 拾光商城 · 在线购物网站课程设计</span><span>课程演示 · 模拟支付</span></div>
-  </div></footer>
-  <script src="/vendor/bootstrap/js/bootstrap.bundle.min.js" defer></script>
-  <script src="/js/products.js" defer></script>
-  <script src="/js/favorites.js" defer></script>
-</body>
-</html>
+<footer class="site-footer"><div class="container-xl footer-grid"><div><a class="footer-brand" href="/">VIBE LAB<span>®</span></a></div><div><a href="/products">全部好物 ↗</a><a href="/account/favorites">灵感收藏 ↗</a></div><div><a href="/account">我的账户 ↗</a><a href="/orders">订单记录 ↗</a><a href="/account/addresses">收货地址 ↗</a></div></div><div class="container-xl footer-bottom justify-content-end"><a href="#">BACK TO TOP ↑</a></div></footer>
+<div id="lab-toast" class="lab-toast" role="status" aria-live="polite" hidden></div>
+<%- include('cart-drawer') %>
+<script src="/vendor/bootstrap/js/bootstrap.bundle.min.js" defer></script>
+<script src="/js/products.js" defer></script><script src="/js/vibe-lab.js" defer></script><script src="/js/favorites.js" defer></script><script src="/js/cart-drawer.js" defer></script>
+</body></html>

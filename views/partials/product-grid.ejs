@@ -1,32 +1,8 @@
-<div class="section-heading products-heading">
-  <div>
-    <h2 id="products-title"><%= query ? '搜索结果' : '本期精选' %></h2>
-  </div>
-  <span class="results-count">共 <%= pagination.total %> 件<% if (pagination.total) { %> · 展示 <%= pagination.start %>–<%= pagination.end %> 件<% } %></span>
-</div>
-<div class="demo-notice"><svg class="icon" aria-hidden="true"><use href="/images/icons.svg#info"/></svg><span>示例商品仅供课程演示，不涉及真实交易。</span></div>
-<% if (invalidCategory) { %><p class="catalog-hint" role="status">分类不存在或已停用，已切换到全部分类。</p><% } %>
-<% if (query || category !== 'all') { %>
-  <div class="filter-summary">
-    <span><% if (query) { %>关键词：<strong><%= query %></strong><% } %>
-      <% if (category !== 'all') { %><span class="ms-2">分类：<%= categories.find(item => item.id === category).name %></span><% } %>
-    </span>
-    <a class="text-action" href="/products">清除筛选 <span aria-hidden="true">×</span></a>
-  </div>
-<% } %>
-<% if (!products.length) { %>
-  <div class="empty-state">
-    <svg class="icon" aria-hidden="true"><use href="/images/icons.svg#search"/></svg>
-    <h3><%= query ? '暂时没有找到这件好物' : '暂时没有可展示的好物' %></h3>
-    <p><%= query ? '换个关键词或选择其他分类试试。' : '可以切换分类，或稍后再来看看。' %></p>
-    <a href="/products" class="btn btn-outline-brand">查看全部好物</a>
-  </div>
-<% } else { %>
-  <div class="row g-4 product-grid">
-    <% products.forEach(product => { %>
-      <div class="col-12 col-sm-6 col-lg-4"><%- include('product-card', { product }) %></div>
-    <% }) %>
-  </div>
-<% } %>
+<span class="visually-hidden" data-catalog-count>共 <%= pagination.total %> 件</span>
+<p class="catalog-hint" data-catalog-status role="status" hidden></p>
+<% if(invalidCategory){ %><p class="catalog-hint">分类不存在或已停用，已切换到全部分类。</p><% } %>
+
+<div class="product-grid" data-product-grid data-pages="<%= pagination.totalPages %>" data-page="<%= pagination.page %>" data-total="<%= pagination.total %>"><% products.forEach(product => { %><%- include('product-card',{product}) %><% }) %></div>
+<div class="empty-state" data-catalog-empty <%= products.length ? 'hidden' : '' %>><h3><%= query ? '暂时没有找到这件好物' : '暂时没有可展示的好物' %></h3><p>换个关键词或分类，继续探索。</p><a href="/products" class="btn btn-brand">查看全部好物</a></div>
 <%- include('pagination') %>
-<% products.forEach(product => { %><%- include('product-preview', { product }) %><% }) %>
+<div data-previews><% products.forEach(product => { %><%- include('product-preview',{product}) %><% }) %></div>
