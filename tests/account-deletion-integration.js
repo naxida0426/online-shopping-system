@@ -50,6 +50,10 @@ module.exports = async (t, { pool, base }) => {
       const wrong = await alice.post("/account/delete", { password: "Incorrect-close-password", confirmDeletion: "yes" });
       assert.equal(wrong.status, 422);
       assert.ok(!wrong.body.includes("Incorrect-close-password"));
+      for(let attempt=0;attempt<6;attempt++){
+        const retry=await alice.post('/account/delete',{password:'Incorrect-close-password',confirmDeletion:'yes'});
+        assert.equal(retry.status,422);assert.equal(retry.headers.get('retry-after'),null);
+      }
       assert.equal((await alice.request("/account")).status, 200);
       assert.equal((await getCart(users[0])).quantity, 1);
     });

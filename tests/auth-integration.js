@@ -180,21 +180,22 @@ module.exports = async function authIntegration(t, { pool, base }) {
       await pool.execute("UPDATE sessions SET expires = 1 WHERE session_id = ?", [id]);
       assert.equal((await request("/account")).status, 303);
     });
-    await t.test("连续失败的登录和注册会返回 429", async () => {
+    await t.test("连续登录或注册失败不再触发次数限制，之后仍可正常登录", async () => {
       cookie = "";
       token = csrf((await request("/login")).body);
-      let status;
       for (let i = 0; i < 12; i++) {
         const response = await login(username, { password: "wrong-password" });
-        status = response.status;
-        if (status === 429) { assert.ok(Number(response.headers.get("retry-after")) > 0); break; }
+        assert.equal(response.status, 401);
+        assert.equal(response.headers.get("retry-after"), null);
+        assert.ok(!response.body.includes("尝试次数较多"));
       }
-      assert.equal(status, 429);
-      for (let i = 0; i < 3; i++) {
-        status = (await request("/register", { _csrf: token, username: "!" })).status;
-        if (status === 429) break;
+      for (let i = 0; i < 7; i++) {
+        const response = await request("/register", { _csrf: token, username: "!" });
+        assert.equal(response.status, 422);
+        assert.equal(response.headers.get("retry-after"), null);
       }
-      assert.equal(status, 429);
+      assert.equal((await login()).status, 303);
+      assert.equal((await request("/account")).status, 200);
     });
   } finally {
     for (const id of sessionIds) await pool.execute("DELETE FROM sessions WHERE session_id = ?", [id]);

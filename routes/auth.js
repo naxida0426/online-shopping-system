@@ -1,5 +1,4 @@
 const express = require("express");
-const { rateLimit } = require("express-rate-limit");
 const { registrationInput, registerUser, authenticate } = require("../services/userService");
 const { safeReturnTo, csrfToken, verifyCsrf, sessionAction } = require("../utils/auth");
 const { requireAuth } = require("../middleware/auth");
@@ -18,21 +17,13 @@ async function form(req, res, page, status = 200, errors = [], values = {}) {
   });
 }
 
-function limiter(limit, windowMs, skipSuccessfulRequests = false) {
-  return rateLimit({ windowMs, limit, standardHeaders: "draft-8", legacyHeaders: false, skipSuccessfulRequests,
-    handler: (req, res) => res.status(429).render("message", {
-      title: "请稍后重试", icon: "info", message: "尝试次数较多，请稍后再试",
-      description: "为保护账户，暂时限制了这个网络地址的连续尝试。请按响应中的 Retry-After 时间重试。", activePage: "", query: ""
-    }) });
-}
-
 router.use((req, res, next) => { res.set("Cache-Control", "no-store"); next(); });
 router.get(["/login", "/register"], (req, res) => {
   if (req.user) return res.redirect(303, safeReturnTo(req.query.next));
   return form(req, res, /^\/register\/?$/i.test(req.path) ? "register" : "login");
 });
 
-router.post("/register", verifyCsrf, limiter(5, 60 * 60 * 1000), async (req, res, next) => {
+router.post("/register", verifyCsrf, async (req, res, next) => {
   if (req.user) return res.redirect(303, "/account");
   const input = registrationInput(req.body);
   const values = { username: input.username, email: input.email };
@@ -48,7 +39,7 @@ router.post("/register", verifyCsrf, limiter(5, 60 * 60 * 1000), async (req, res
   }
 });
 
-router.post("/login", verifyCsrf, limiter(10, 15 * 60 * 1000, true), async (req, res, next) => {
+router.post("/login", verifyCsrf, async (req, res, next) => {
   if (req.user) return res.redirect(303, "/account");
   const identifier = typeof req.body.identifier === "string" ? req.body.identifier.trim() : "";
   const password = typeof req.body.password === "string" ? req.body.password : "";
@@ -86,7 +77,7 @@ function deletionForm(req, res, status = 200, errorMessage = "") {
   return res.status(status).render("auth/delete", { title: "注销账号 · 拾光商城", activePage: "account", query: "", errorMessage });
 }
 router.get("/account/delete", requireAuth, (req, res) => deletionForm(req, res));
-router.post("/account/delete", requireAuth, verifyCsrf, limiter(5, 15 * 60 * 1000, true), async (req, res, next) => {
+router.post("/account/delete", requireAuth, verifyCsrf, async (req, res, next) => {
   try {
     await deleteAccount(req.user.id, req.body.password, req.body.confirmDeletion);
     await sessionAction(req, "destroy");

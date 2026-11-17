@@ -44,6 +44,6 @@ SQL 文件不指定库名。`db:init` 根据配置创建并选择数据库，再
 
 会话表由 `db:init` 创建，网站运行账号无需建表权限。会话主要保存用户 ID、CSRF 令牌、Cookie、短提示及结算草稿的令牌和摘要，不存储密码、哈希、邮箱或收货地址；每次请求重新读取用户状态和角色。过期会话由会话存储适配器定时清理。
 
-服务器部署保持 `NODE_ENV=production`。会话 Cookie 的 Secure 属性由 `SESSION_COOKIE_SECURE` 独立控制：公网 IP 的 HTTP 部署使用 `false`（未配置时也默认 false），HTTPS 部署必须设为 `true`。HTTP 不加密传输，正式处理真实账户及个人信息前应配置 HTTPS。HttpOnly、SameSite=Lax、8 小时有效期、CSRF 校验及登录限流保持启用。仅在网站确实位于受信任的一层反向代理之后设置 `TRUST_PROXY=1`，同时限制外部绕过代理直连 Node.js，否则客户端地址识别和限流可能不准确。本地直连演示保持 `TRUST_PROXY=0`。修改环境变量后重启服务，再重新打开登录页面。
+服务器部署保持 `NODE_ENV=production`。会话 Cookie 的 Secure 属性由 `SESSION_COOKIE_SECURE` 独立控制：公网 IP 的 HTTP 部署使用 `false`（未配置时也默认 false），HTTPS 部署必须设为 `true`。HTTP 不加密传输，正式处理真实账户及个人信息前应配置 HTTPS。HttpOnly、SameSite=Lax、8 小时有效期、CSRF 校验保持启用。仅在网站确实位于受信任的一层反向代理之后设置 `TRUST_PROXY=1`，同时限制外部绕过代理直连 Node.js，否则客户端地址识别可能不准确。本地直连演示保持 `TRUST_PROXY=0`。修改环境变量后重启服务，再重新打开登录页面。
 
-会话存储使用 `express-mysql-session`，驱动统一复用项目的 `mysql2` 版本（见 `package.json` 中的 overrides），避免适配器固定的旧驱动产生重复依赖。密码使用 `bcryptjs`，工作因子为 12。登录每个网络地址 15 分钟最多 10 次失败，注册每小时最多 5 次请求；目前限流计数在单个 Node.js 进程内，重启会重置，多实例部署前需使用共享计数存储。
+会话存储使用 `express-mysql-session`，驱动统一复用项目的 `mysql2` 版本（见 `package.json` 中的 overrides），避免适配器固定的旧驱动产生重复依赖。密码使用 `bcryptjs`，工作因子为 12。登录、注册及注销不设置请求次数限制，错误输入仍按原表单校验反馈。

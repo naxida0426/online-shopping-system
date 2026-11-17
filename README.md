@@ -27,7 +27,7 @@
 - 服务端：Node.js、Express 5、EJS
 - 数据库：MySQL 8、mysql2、InnoDB 事务
 - 前端：Tailwind CDN、Bootstrap 5 布局与弹窗、原生 JavaScript、Chart.js
-- 账户：express-session、MySQL 会话存储、bcryptjs、CSRF 校验、登录限流
+- 账户：express-session、MySQL 会话存储、bcryptjs、CSRF 校验
 - 邮件：Nodemailer
 
 ## 安装与运行
@@ -104,7 +104,7 @@ npm start
 | `ORDER_PAYMENT_TIMEOUT_SECONDS` | 新订单支付期限，默认 1800 秒，范围 1–86400 |
 | `MAIL_ENABLED`、`SMTP_*` | 邮件开关和 SMTP 配置 |
 
-会话 Cookie 的 Secure 属性由 `SESSION_COOKIE_SECURE` 独立控制。公网 IP 的 HTTP 部署可保持 `NODE_ENV=production`，使用 `SESSION_COOKIE_SECURE=false`；切换 HTTPS 后设置为 `true`。HttpOnly、SameSite=Lax、CSRF 校验和登录限流保持启用。HTTP 不加密传输，正式处理真实账户及个人信息前应配置 HTTPS。环境变量修改后须重启网站，并重新打开登录页面获取表单。
+会话 Cookie 的 Secure 属性由 `SESSION_COOKIE_SECURE` 独立控制。公网 IP 的 HTTP 部署可保持 `NODE_ENV=production`，使用 `SESSION_COOKIE_SECURE=false`；切换 HTTPS 后设置为 `true`。HttpOnly、SameSite=Lax、CSRF 校验保持启用。HTTP 不加密传输，正式处理真实账户及个人信息前应配置 HTTPS。环境变量修改后须重启网站，并重新打开登录页面获取表单。
 
 ## 使用说明
 
@@ -188,4 +188,3 @@ docs/          模块说明
 - 支付仅为模拟，暂不支持真实付款和退款。
 - 邮件不支持自动重试、退信处理和邮箱所有权验证。
 - 暂不支持密码找回及商品图片上传。
-- 登录限流保存在单个进程中，多实例部署需要共享存储。
