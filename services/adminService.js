@@ -38,12 +38,13 @@ async function listProducts(adminId, input = {}) {
 async function saveProduct(adminId, id, body, version) {
   const {values:v,errors} = productInput(body);
   if (errors.length) throw new OrderError(errors.join(" "),422);
-  try { await fs.access(path.join(__dirname,"..","public",v.imagePath.slice(1))); } catch { throw new OrderError("本地图片不存在，请先将图片放入 public/images。",422); }
+  try { await fs.access(path.join(__dirname,"..","public",v.imagePath.slice(1))); } catch { throw new OrderError("商品图片不存在，请重新上传。",422); }
   return adminTransaction(adminId,async c => {
     if (id) {
       const [[old]] = await c.execute("SELECT * FROM products WHERE id = ? FOR UPDATE",[idValue(id)]);
       if (!old || old.status === "deleted" || old.deleted_at) throw new OrderError("商品已删除或不存在。",404);
       if (productVersion(old) !== version) throw new OrderError("商品或库存已变化，请核对刷新后的数据再编辑。");
+      v.isDemo = Boolean(old.is_demo);
     }
     const [[category]] = await c.execute("SELECT id FROM categories WHERE id = ? FOR SHARE",[Number(v.categoryId)]);
     if (!category) throw new OrderError("分类不存在。",422);

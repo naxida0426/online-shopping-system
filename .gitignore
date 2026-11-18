@@ -153,3 +153,6 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# Administrator-uploaded product images belong to the running instance.
+/public/images/product-upload-*

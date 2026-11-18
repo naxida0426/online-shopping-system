@@ -66,6 +66,7 @@ module.exports=async function verifyBusiness(t,{pool,base}){
    assert.equal((await alice.request(`/products/${products[0]}`)).status,404);
    await admin.saveProduct(adminId,products[0],{...body,stock:String(current)},await version(products[0]));
   });
+  await require('./product-upload-integration')(t,{pool,base,staff,alice,adminId,body});
   await t.test('支付与取消入口要求登录、本人权限和 CSRF，GET 不改状态',async()=>{
    unpaidId=await makeOrder();const guest=await createClient(base);
    for(const action of ['pay','cancel']){assert.equal((await guest.request(`/orders/${unpaidId}/${action}`)).status,303);assert.equal((await bob.request(`/orders/${unpaidId}/${action}`)).status,404);assert.equal((await alice.request(`/orders/${unpaidId}/${action}`)).status,200);assert.equal((await alice.request(`/orders/${unpaidId}/${action}`,{outcome:'success',confirmCancel:'yes'})).status,403);}

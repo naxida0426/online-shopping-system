@@ -4,7 +4,7 @@ const { normalizePage } = require("./catalog");
 function productInput(body = {}) {
   const text = key => typeof body[key] === "string" ? body[key].trim() : "";
   const values = { sku: text("sku"), name: text("name"), categoryId: text("categoryId"), description: text("description"),
-    price: text("price"), stock: text("stock"), imagePath: text("imagePath"), status: text("status"), tag: text("tag"), color: text("color") || "sand", isDemo: body.isDemo === "1" };
+    price: text("price"), stock: text("stock"), imagePath: text("imagePath"), status: text("status"), tag: text("tag"), color: text("color") || "sand", isDemo: false };
   const errors = [];
   if (!/^[a-zA-Z0-9_-]{1,64}$/.test(values.sku)) errors.push("SKU 须为 1–64 个字母、数字、下划线或连字符。");
   if (!values.name || values.name.length > 120 || /\p{Cc}/u.test(values.name)) errors.push("名称须为 1–120 个普通字符。");
@@ -13,7 +13,7 @@ function productInput(body = {}) {
   if (!/^\d{1,8}(?:\.\d{1,2})?$/.test(values.price)) errors.push("价格须为非负金额，整数最多 8 位、小数最多 2 位。");
   else { const [a,b = ""] = values.price.split("."); values.price = `${BigInt(a)}.${b.padEnd(2,"0")}`; }
   if (!/^(?:0|[1-9]\d{0,9})$/.test(values.stock) || Number(values.stock) > 4294967295) errors.push("库存须为 0–4294967295 的整数。");
-  if (!/^\/images\/[a-zA-Z0-9_-][a-zA-Z0-9_.-]*\.(svg|png|jpe?g|webp|gif)$/i.test(values.imagePath)) errors.push("图片请填写本地 /images/ 下的图片地址。");
+  if (!/^\/images\/[a-zA-Z0-9_-][a-zA-Z0-9_.-]*\.(svg|png|jpe?g|webp|gif)$/i.test(values.imagePath)) errors.push("请上传有效的商品图片。");
   if (!["active","inactive"].includes(values.status)) errors.push("请选择上架或下架状态。");
   if (values.tag.length > 30) errors.push("标签不能超过 30 字符。");
   if (!["sand","sage","stone","peach","paper","clay"].includes(values.color)) errors.push("请选择有效背景色。");

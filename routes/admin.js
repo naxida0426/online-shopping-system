@@ -4,6 +4,7 @@ const {OrderError}=require("../services/orderService");
 const {productInput}=require("../utils/admin");
 const {requireAdmin}=require("../middleware/auth");
 const {verifyCsrf}=require("../utils/auth");
+const {parseProductImage,saveProductImage,discardProductImage}=require("../middleware/productImage");
 const router=express.Router();
 router.use(requireAdmin);
 router.use((req,res,next)=>{
@@ -25,11 +26,29 @@ router.get("/products/new",(req,res)=>productForm(req,res,null));
 router.get("/products/:id/edit",(req,res)=>productForm(req,res,req.params.id));
 function save(idFromReq){return async(req,res,next)=>{
   const id=idFromReq?req.params.id:null;
-  try{await admin.saveProduct(req.user.id,id,req.body,req.body.version);res.redirect(303,"/admin/products");}
-  catch(error){if(error instanceof OrderError && [422,409].includes(error.status))return productForm(req,res,id,{status:error.status,errorMessage:error.message,values:error.status===409&&id?undefined:productInput(req.body).values});next(error);}
+  let uploadedImage,previousImage;
+  try{
+    if(req.is("multipart/form-data")){
+      previousImage=id?(await admin.getProduct(req.user.id,id)).imagePath:"/images/product-placeholder.svg";
+      req.body.imagePath=previousImage;
+      if(req.imageUploadError)throw req.imageUploadError;
+      if(req.file){uploadedImage=await saveProductImage(req.file);req.body.imagePath=uploadedImage;}
+      else if(!id)throw new OrderError("请选择商品图片。",422);
+    }
+    await admin.saveProduct(req.user.id,id,req.body,req.body.version);
+    res.redirect(303,"/admin/products");
+  }
+  catch(error){
+    if(uploadedImage){
+      await discardProductImage(uploadedImage).catch(()=>console.error("[admin] 未能清理未保存的商品图片。"));
+      req.body.imagePath=previousImage;
+    }
+    if(error instanceof OrderError && [422,409].includes(error.status))return productForm(req,res,id,{status:error.status,errorMessage:error.message+(req.file?" 新图片尚未保存，请重新选择。":""),values:error.status===409&&id?undefined:productInput(req.body).values});
+    next(error);
+  }
 };}
-router.post("/products",verifyCsrf,save(false));
-router.post("/products/:id",verifyCsrf,save(true));
+router.post("/products",parseProductImage,verifyCsrf,save(false));
+router.post("/products/:id",parseProductImage,verifyCsrf,save(true));
 router.get("/products/:id/delete",async(req,res)=>res.render("admin/product-delete",{title:"确认软删除 · 拾光商城",product:await admin.getProduct(req.user.id,req.params.id)}));
 router.post("/products/:id/delete",verifyCsrf,async(req,res)=>{
   if(req.body.confirmDelete!=="yes")throw new OrderError("请在确认页面提交软删除。",422);
