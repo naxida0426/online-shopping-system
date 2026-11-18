@@ -15,7 +15,7 @@ const router = express.Router();
 
 router.use(["/checkout", "/orders"], requireAuth);
 
-const orderLabels = { pending: "待确认", confirmed: "已确认", shipped: "已发货", completed: "已完成", cancelled: "已取消" };
+const orderLabels = { pending: "待确认", confirmed: "未发货", shipped: "已发货", completed: "已完成", cancelled: "已取消" };
 const paymentLabels = { unpaid: "未支付", paid: "已支付", cancelled: "已取消", refunded: "已退款" };
 router.use((req, res, next) => {
   Object.assign(res.locals, { orderLabels, paymentLabels, orderFilters, orderListUrl, orderUrl,
@@ -105,7 +105,7 @@ router.post("/orders/:id/receive", verifyCsrf, async (req, res, next) => {
     next(error);
   }
 });
-const notices = { coupon_applied: "兑换码已应用，支付金额已更新。", order_expired: "订单已超时自动关闭，库存已恢复，请重新下单。", paid: "模拟支付成功，未发生真实扣款。订单已自动发货，请确认收货后评价。", already_paid: "此前已完成模拟支付，未重复处理。", payment_cancelled: "已取消本次支付，订单仍待支付；取消订单才会恢复库存。", order_cancelled: "订单已取消，库存已恢复。", already_cancelled: "此前已取消，未重复恢复库存。" };
+const notices = { coupon_applied: "兑换码已应用，支付金额已更新。", order_expired: "订单已超时自动关闭，库存已恢复，请重新下单。", paid: "模拟支付成功，未发生真实扣款。请等待管理员发货。", already_paid: "此前已完成模拟支付，未重复处理。", payment_cancelled: "已取消本次支付，订单仍待支付；取消订单才会恢复库存。", order_cancelled: "订单已取消，库存已恢复。", already_cancelled: "此前已取消，未重复恢复库存。" };
 function orderAction(work, sendEmail = false) {
   return async (req, res, next) => {
     try {

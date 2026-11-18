@@ -77,7 +77,7 @@ module.exports=async function verifyBusiness(t,{pool,base}){
    paidId=unpaidId;const before=await stocks();
    assert.equal((await alice.post(`/orders/${paidId}/pay`,{outcome:'success',amount:'0.01',method:'real',userId:users[1],orderStatus:'completed'})).status,303);
    const p=await payment(paidId),o=await getOwnOrder(users[0],paidId);paidNo=o.orderNo;
-   assert.equal(p.amount,'25.28');assert.equal(p.method,'simulated');assert.equal(p.status,'succeeded');assert.ok(p.paid_at);assert.equal(o.orderStatus,'shipped');assert.equal(o.paymentStatus,'paid');assert.equal(o.emailStatus,'skipped');assert.deepEqual(await stocks(),before);
+   assert.equal(p.amount,'25.28');assert.equal(p.method,'simulated');assert.equal(p.status,'succeeded');assert.ok(p.paid_at);assert.equal(o.orderStatus,'confirmed');assert.equal(o.canReceive,false);assert.equal(o.paymentStatus,'paid');assert.equal(o.emailStatus,'skipped');assert.deepEqual(await stocks(),before);
    const page=await alice.request(`/orders/${paidId}`);assert.ok(page.body.includes('尚未验证发送'));assert.ok(page.body.includes('未发生真实')||page.body.includes('不涉及真实'));
   });
   await t.test('重复支付并发请求幂等，已支付订单不能退回取消',async()=>{
@@ -97,14 +97,23 @@ module.exports=async function verifyBusiness(t,{pool,base}){
    const before=await stocks(),id=await makeOrder(),held=await stocks();const replies=await Promise.all([alice.post(`/orders/${id}/pay`,{outcome:'success'}),alice.post(`/orders/${id}/cancel`,{confirmCancel:'yes'})]);assert.deepEqual(replies.map(r=>r.status).sort(),[303,409]);const o=await getOwnOrder(users[0],id);assert.deepEqual(await stocks(),o.paymentStatus==='paid'?held:before);assert.equal(o.payment.status,o.paymentStatus==='paid'?'succeeded':'cancelled');
   });
   await t.test('支付或恢复库存的中途写入故障会整体回滚',async()=>{
-   let id=await makeOrder(),before=await stocks();await failOnce("UPDATE orders SET order_status = 'shipped'",()=>simulatePayment(users[0],id,'success'));assert.equal(await payment(id),undefined);assert.equal((await getOwnOrder(users[0],id)).paymentStatus,'unpaid');assert.deepEqual(await stocks(),before);
+   let id=await makeOrder(),before=await stocks();await failOnce("UPDATE orders SET order_status = 'confirmed'",()=>simulatePayment(users[0],id,'success'));assert.equal(await payment(id),undefined);assert.equal((await getOwnOrder(users[0],id)).paymentStatus,'unpaid');assert.deepEqual(await stocks(),before);
    await failOnce("UPDATE orders SET order_status = 'cancelled'",()=>cancelOrder(users[0],id));assert.equal(await payment(id),undefined);assert.deepEqual(await stocks(),before);assert.equal((await getOwnOrder(users[0],id)).orderStatus,'pending');await cancelOrder(users[0],id);
   });
   await t.test('后台状态只能按已支付确认→发货→完成推进，不能伪造支付',async()=>{
    const unpaid=await makeOrder();assert.equal((await staff.post(`/admin/orders/${unpaid}/status`,{nextStatus:'shipped',expectedStatus:'pending',paymentStatus:'paid'})).status,409);
    assert.equal((await staff.post(`/admin/orders/${paidId}/status`,{nextStatus:'completed',expectedStatus:'confirmed'})).status,409);
    assert.equal((await staff.post(`/admin/orders/${paidId}/status`,{nextStatus:'paid',expectedStatus:'confirmed'})).status,422);
-   for(const [expectedStatus,nextStatus]of [['confirmed','shipped'],['shipped','completed']])assert.equal((await staff.post(`/admin/orders/${paidId}/status`,{expectedStatus,nextStatus})).status,303);
+   const before=await getOwnOrder(users[0],paidId),held=await stocks();
+   const query={status:'confirmed',q:paidNo};assert.equal((await getOrders(users[0],query)).orders.length,1);assert.equal((await getOrders(users[1],query)).orders.length,0);assert.equal((await admin.listOrders(adminId,query)).orders.length,1);
+   const waiting=await alice.request(`/orders/${paidId}`);assert.ok(waiting.body.includes('未发货'));assert.ok(!waiting.body.includes(`/orders/${paidId}/receive`));assert.ok((await alice.request('/orders?status=confirmed')).body.includes('value="confirmed" selected'));
+   const adminPage=await staff.request(`/admin/orders/${paidId}`);assert.ok(adminPage.body.includes('>发货</button>'));assert.equal((await getOwnOrder(users[0],paidId)).orderStatus,'confirmed');
+   const fields={expectedStatus:'confirmed',nextStatus:'shipped'};assert.equal((await alice.post(`/admin/orders/${paidId}/status`,fields)).status,403);assert.equal((await staff.request(`/admin/orders/${paidId}/status`,fields)).status,403);
+   await failOnce("UPDATE orders SET order_status=?",()=>admin.advanceOrder(adminId,paidId,'shipped','confirmed'));assert.equal((await getOwnOrder(users[0],paidId)).orderStatus,'confirmed');
+   const replies=await Promise.all([staff.post(`/admin/orders/${paidId}/status`,fields),staff.post(`/admin/orders/${paidId}/status`,fields),alice.post(`/orders/${paidId}/pay`,{outcome:'success'})]);assert.ok(replies.every(r=>r.status===303));
+   const sent=await getOwnOrder(users[0],paidId);assert.equal(sent.orderStatus,'shipped');assert.equal(sent.canReceive,true);assert.equal(sent.paidAt,before.paidAt);assert.equal(sent.total,before.total);assert.deepEqual(await stocks(),held);
+   assert.equal((await getOrders(users[0],query)).orders.length,0);assert.equal((await admin.listOrders(adminId,query)).orders.length,0);assert.equal((await getOrders(users[0],{status:'shipped',q:paidNo})).orders.length,1);assert.ok((await alice.request(`/orders/${paidId}`)).body.includes(`/orders/${paidId}/receive`));
+   assert.equal((await staff.post(`/admin/orders/${paidId}/status`,{expectedStatus:'shipped',nextStatus:'completed'})).status,303);
    assert.equal((await getOwnOrder(users[0],paidId)).orderStatus,'completed');assert.equal((await staff.post(`/admin/orders/${paidId}/status`,{nextStatus:'shipped',expectedStatus:'completed'})).status,409);
    assert.equal((await alice.request(`/admin/orders/${paidId}`)).status,403);assert.equal((await staff.request(`/admin/orders/${paidId}`)).status,200);
   });

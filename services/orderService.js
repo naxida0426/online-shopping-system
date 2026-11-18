@@ -78,7 +78,7 @@ const orderColumns = `o.id, o.order_no AS orderNo, o.total_amount AS total, o.or
 async function getOrders(userId, input = {}) {
   await expireOrders({ userId });
   const options = readOrderOptions(input), conditions = ["o.user_id = ?"], params = [userId];
-  const filters = { unpaid: "o.order_status = 'pending' AND o.payment_status = 'unpaid'", paid: "o.payment_status = 'paid' AND o.order_status <> 'cancelled'", shipped: "o.order_status = 'shipped' AND o.payment_status = 'paid'", completed: "o.order_status = 'completed' AND o.payment_status = 'paid'", cancelled: "o.order_status = 'cancelled'" };
+  const filters = { unpaid: "o.order_status = 'pending' AND o.payment_status = 'unpaid'", confirmed: "o.order_status = 'confirmed' AND o.payment_status = 'paid'", paid: "o.payment_status = 'paid' AND o.order_status <> 'cancelled'", shipped: "o.order_status = 'shipped' AND o.payment_status = 'paid'", completed: "o.order_status = 'completed' AND o.payment_status = 'paid'", cancelled: "o.order_status = 'cancelled'" };
   if (filters[options.status]) conditions.push(filters[options.status]);
   if (options.query) { conditions.push("o.order_no LIKE ? ESCAPE '!'"); params.push(`%${options.query.replace(/[!%_]/g, "!$&")}%`); }
   const where = `FROM orders o WHERE ${conditions.join(" AND ")}`;

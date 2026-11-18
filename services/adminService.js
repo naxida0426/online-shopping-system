@@ -68,7 +68,7 @@ async function deleteProduct(adminId, id, version) {
 async function listOrders(adminId,input={}) {
   await assertAdmin(getPool(),adminId);
   const options=readOrderOptions(input),conditions=[],params=[];
-  const filters={unpaid:"o.order_status='pending' AND o.payment_status='unpaid'",paid:"o.payment_status='paid' AND o.order_status<>'cancelled'",cancelled:"o.order_status='cancelled'"};
+  const filters={unpaid:"o.order_status='pending' AND o.payment_status='unpaid'",confirmed:"o.order_status='confirmed' AND o.payment_status='paid'",paid:"o.payment_status='paid' AND o.order_status<>'cancelled'",shipped:"o.order_status='shipped' AND o.payment_status='paid'",completed:"o.order_status='completed' AND o.payment_status='paid'",cancelled:"o.order_status='cancelled'"};
   if(filters[options.status]) conditions.push(filters[options.status]);
   if(options.query){conditions.push("CONCAT_WS(' ',o.order_no,u.username) LIKE ? ESCAPE '!'");params.push(`%${options.query.replace(/[!%_]/g,"!$&")}%`);}
   const where=`FROM orders o JOIN users u ON u.id=o.user_id ${conditions.length?`WHERE ${conditions.join(" AND ")}`:""}`;
@@ -87,7 +87,7 @@ async function advanceOrder(adminId,id,next,expected) {
   return adminTransaction(adminId,async c=>{
     const [[order]]=await c.execute("SELECT order_status,payment_status FROM orders WHERE id=? FOR UPDATE",[idValue(id)]);
     if(!order) throw new OrderError("订单不存在。",404);
-    if(!["shipped","completed"].includes(next)) throw new OrderError("只支持已确认 → 已发货 → 已完成。",422);
+    if(!["shipped","completed"].includes(next)) throw new OrderError("只支持未发货 → 已发货 → 已完成。",422);
     if(order.order_status === next && order.payment_status === "paid") return;
     if(order.order_status!==expected || order.payment_status!=="paid" || ({confirmed:"shipped",shipped:"completed"})[order.order_status]!==next) throw new OrderError("订单状态已变化，或尚未支付，不能进行此操作。");
     await c.execute("UPDATE orders SET order_status=? WHERE id=?",[next,Number(id)]);

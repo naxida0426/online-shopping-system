@@ -12,7 +12,7 @@ const { cartFingerprint } = require("../utils/checkout");
 module.exports = async (t, { pool, base }) => {
   const suffix = randomUUID().slice(0, 8), password = `Engagement-${randomUUID()}`;
   const users = [], products = [], sessions = new Set();
-  let categoryId, alice, bob, completed, pending, confirmed, shipped, another;
+  let categoryId, alice, bob, staff, completed, pending, confirmed, shipped, another;
   const shipping = { recipientName: "演示收货人", recipientPhone: "13800000000", recipientAddress: "演示省演示市演示地址" };
   const review = { rating: "5", content: "使用方便，体验很好。" };
   async function order(status, owner = users[0]) {
@@ -29,10 +29,11 @@ module.exports = async (t, { pool, base }) => {
   const url = (o, item = o.items[0]) => `/orders/${o.id}/items/${item.id}/review?status=completed`;
   try {
     const hash = await bcrypt.hash(password, 12);
-    for (const name of ["engage_a", "engage_b"]) {
+    for (const name of ["engage_a", "engage_b", "engage_admin"]) {
       const [u] = await pool.execute("INSERT INTO users (username,email,password_hash) VALUES (?,?,?)", [`${name}_${suffix}`, `${name}_${suffix}@example.invalid`, hash]);
       users.push(u.insertId);
     }
+    await pool.execute("UPDATE users SET role='admin' WHERE id=?", [users[2]]);
     const [category] = await pool.execute("INSERT INTO categories (slug,name) VALUES (?, '互动测试分类')", [`engagement-${suffix}`]);
     categoryId = category.insertId;
     for (let i = 0; i < 2; i++) {
@@ -41,6 +42,7 @@ module.exports = async (t, { pool, base }) => {
     }
     alice = await createClient(base, `engage_a_${suffix}`, password, sessions);
     bob = await createClient(base, `engage_b_${suffix}`, password, sessions);
+    staff = await createClient(base, `engage_admin_${suffix}`, password, sessions);
 
     await t.test("收藏要求登录和 CSRF，列表与详情提供入口，重复收藏幂等且账号隔离", async () => {
       const guest = await createClient(base);
@@ -175,37 +177,40 @@ module.exports = async (t, { pool, base }) => {
       assert.equal((await getOwnOrder(users[0], shipped.id)).orderStatus, "shipped", "GET 不改变收货状态");
       assert.equal((await alice.post(url(confirmed), review)).status, 409);
     });
-    await t.test("历史已支付订单自动补发货，重复迁移幂等；确认收货后进入评价且库存付款不变", async () => {
-      const { migrateAutoShipping } = require("../scripts/migrate-auto-shipping");
+    await t.test("初始化不会自动发货；已发货订单确认收货后进入评价且库存付款不变", async () => {
       const beforeMigration = await getOwnOrder(users[0], confirmed.id);
-      assert.ok(await migrateAutoShipping(pool) >= 1);
-      assert.equal(await migrateAutoShipping(pool), 0);
+      const { initializeDatabase } = require("../scripts/init-db");
+      await initializeDatabase();
+      await initializeDatabase();
       const migrated = await getOwnOrder(users[0], confirmed.id);
-      assert.equal(migrated.orderStatus, "shipped");
+      assert.equal(migrated.orderStatus, "confirmed");
       assert.equal(migrated.paidAt, beforeMigration.paidAt);
       assert.equal((await getOwnOrder(users[0], pending.id)).orderStatus, "pending");
       assert.equal((await getOwnOrder(users[0], completed.id)).orderStatus, "completed");
       const [[before]] = await pool.execute("SELECT stock FROM products WHERE id = ?", [products[0]]);
-      const orderBefore = await getOwnOrder(users[0], confirmed.id);
-      const responses = await Promise.all([alice.post(`/orders/${confirmed.id}/receive`, { confirmReceipt: "yes" }), alice.post(`/orders/${confirmed.id}/receive`, { confirmReceipt: "yes" })]);
+      const orderBefore = await getOwnOrder(users[0], shipped.id);
+      const responses = await Promise.all([alice.post(`/orders/${shipped.id}/receive`, { confirmReceipt: "yes" }), alice.post(`/orders/${shipped.id}/receive`, { confirmReceipt: "yes" })]);
       assert.ok(responses.every(r => r.status === 303));
       const location = responses[0].headers.get("location");
       assert.equal(new URL(location, base).searchParams.get("status"), "completed");
       assert.equal(new URL(location, base).searchParams.get("q"), orderBefore.orderNo);
-      assert.ok((await alice.request(location)).body.includes(`/orders/${confirmed.id}/items/${confirmed.items[0].id}/review`));
-      assert.equal((await getOwnOrder(users[0], confirmed.id)).orderStatus, "completed");
-      assert.equal((await getOwnOrder(users[0], confirmed.id)).paidAt, orderBefore.paidAt);
+      assert.ok((await alice.request(location)).body.includes(`/orders/${shipped.id}/items/${shipped.items[0].id}/review`));
+      assert.equal((await getOwnOrder(users[0], shipped.id)).orderStatus, "completed");
+      assert.equal((await getOwnOrder(users[0], shipped.id)).paidAt, orderBefore.paidAt);
       const [[after]] = await pool.execute("SELECT stock FROM products WHERE id = ?", [products[0]]);
       assert.equal(after.stock, before.stock);
-      assert.equal((await alice.post(url(confirmed), review)).status, 303);
+      assert.equal((await alice.post(url(shipped), review)).status, 303);
     });
-    await t.test("付款即自动发货，无需后台，确认收货后才能评价且重复支付不倒退状态", async () => {
+    await t.test("付款后未发货，管理员发货后才可收货评价，重复支付不倒退状态", async () => {
       const [[before]] = await pool.execute("SELECT stock FROM products WHERE id = ?", [products[0]]);
       assert.equal((await alice.post(`/orders/${pending.id}/pay`, { outcome: "success" })).status, 303);
       const paid = await getOwnOrder(users[0], pending.id);
-      assert.equal(paid.orderStatus, "shipped");
-      assert.equal(paid.canReceive, true);
+      assert.equal(paid.orderStatus, "confirmed");
+      assert.equal(paid.canReceive, false);
+      assert.equal((await alice.post(`/orders/${pending.id}/receive`, { confirmReceipt: "yes" })).status, 409);
       assert.equal((await alice.post(url(pending), review)).status, 409);
+      assert.equal((await staff.post(`/admin/orders/${pending.id}/status`, { expectedStatus: 'confirmed', nextStatus: 'shipped' })).status, 303);
+      assert.equal((await getOwnOrder(users[0], pending.id)).canReceive, true);
       assert.equal((await alice.post(`/orders/${pending.id}/receive`, { confirmReceipt: "yes" })).status, 303);
       assert.equal((await alice.post(url(pending), review)).status, 303);
       assert.equal((await alice.post(`/orders/${pending.id}/pay`, { outcome: "success" })).status, 303);

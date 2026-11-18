@@ -1,5 +1,5 @@
 const { normalizePage, paginationItems } = require("./catalog");
-const orderFilters = { all: "全部订单", unpaid: "待支付", paid: "已支付", shipped: "待收货", completed: "已完成", cancelled: "已取消" };
+const orderFilters = { all: "全部订单", unpaid: "待支付", confirmed: "未发货", paid: "已支付", shipped: "待收货", completed: "已完成", cancelled: "已取消" };
 function readOrderOptions(input = {}) {
   const valid = typeof input.status === "string" && Object.hasOwn(orderFilters, input.status);
   return { status: valid ? input.status : "all", invalidStatus: input.status !== undefined && !valid,

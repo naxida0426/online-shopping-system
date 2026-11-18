@@ -27,6 +27,7 @@ module.exports = async (t, { pool, base }) => {
     productId = product.insertId;
     paidId = await makeOrder();
     await simulatePayment(users[0], paidId, "success");
+    await require("../services/adminService").advanceOrder(users[2], paidId, "shipped", "confirmed");
     await confirmReceipt(users[0], paidId);
     const [[item]] = await pool.execute("SELECT id FROM order_items WHERE order_id = ?", [paidId]);
     await require("../services/reviewService").createReview(users[0], paidId, item.id, { rating: "5", content: "评价保留" });

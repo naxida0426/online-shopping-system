@@ -10,7 +10,7 @@ router.use(requireAdmin);
 router.use((req,res,next)=>{
   res.locals.activePage="admin";res.locals.query="";
   res.locals.adminPage=req.path.startsWith("/products")?"products":req.path.startsWith("/orders")?"orders":"stats";
-  res.locals.orderLabels={pending:"待确认",confirmed:"已确认",shipped:"已发货",completed:"已完成",cancelled:"已取消"};
+  res.locals.orderLabels={pending:"待确认",confirmed:"未发货",shipped:"已发货",completed:"已完成",cancelled:"已取消"};
   res.locals.paymentLabels={unpaid:"未支付",paid:"已支付",cancelled:"已取消",refunded:"已退款"};
   res.locals.adminPageUrl=(base,options,page)=>{const p=new URLSearchParams();if(options.query)p.set("q",options.query);if(options.status!=="all")p.set("status",options.status);if(page>1)p.set("page",page);return `${base}${p.size?`?${p}`:""}`;};
   next();
