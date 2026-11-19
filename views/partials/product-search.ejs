@@ -1,0 +1,9 @@
+<form class="search-form" action="/products" method="get" role="search" aria-label="全站商品搜索">
+  <label class="visually-hidden" for="site-search">搜索商品</label>
+  <svg class="icon" aria-hidden="true"><use href="/images/icons.svg#search"/></svg>
+  <input id="site-search" name="q" type="search" maxlength="100" placeholder="搜索你的下一件灵感好物…" value="<%= query %>">
+  <% if (typeof searchCategory === 'string' && searchCategory !== 'all' && searchCategory) { %>
+    <input type="hidden" name="category" value="<%= searchCategory %>">
+  <% } %>
+  <button type="submit">搜索</button>
+</form>

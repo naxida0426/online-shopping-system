@@ -1,2 +1,2 @@
-<%- include('../partials/header') %>
+<%- include('../partials/header', {catalogSearch:true}) %>
 <main id="main-content" class="container-xl catalog-page"><nav class="shop-breadcrumb" aria-label="面包屑导航"><a href="/">实验室首页</a><span>/</span><span aria-current="page">灵感仓库</span></nav><div class="catalog-intro"><div><h1>你的灵感，<mark>这里有。</mark></h1></div><span class="archive-number mono"><%= String(pagination.total).padStart(3,'0') %></span></div><section class="catalog-shell" aria-label="商品浏览"><%- include('../partials/category-nav') %><section id="products" class="products-section" aria-label="商品列表"><%- include('../partials/product-grid') %></section></section></main><%- include('../partials/footer') %>

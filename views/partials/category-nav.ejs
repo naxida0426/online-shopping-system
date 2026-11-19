@@ -1,4 +1,7 @@
 <div class="catalog-controls">
 <nav class="category-list" aria-label="商品分类"><% categories.forEach(item => { %><a class="category-item <%= category === item.id ? 'is-active' : '' %>" href="<%= activePage === 'home' ? shopUrl(query,item.id).replace(/^\/products/,'/') : shopUrl(query,item.id) %>" data-category="<%= item.id %>" <%- category === item.id ? 'aria-current="true"' : '' %>><%= item.name %><span aria-hidden="true">↗</span></a><% }) %></nav>
+<div class="catalog-search-row">
+<%- include('product-search', {searchCategory:category}) %>
 <div class="sort-control"><label for="price-sort">排列方式</label><select id="price-sort"><option value="default">默认推荐</option><option value="asc">价格从低到高</option><option value="desc">价格从高到低</option></select></div>
+</div>
 </div>

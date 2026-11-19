@@ -45,6 +45,12 @@ input:not([type=checkbox]):not([type=radio]):not([type=hidden]),select,textarea,
 
 .catalog-controls{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px 24px;margin-bottom:24px;scroll-margin-top:32px}
 .catalog-controls .category-list{margin:0;min-width:0}.catalog-controls .sort-control{flex-shrink:0;margin-left:auto}
+.header-grid-catalog .header-actions{grid-column:2}
+.catalog-controls .category-list{flex-basis:100%}
+.catalog-search-row{display:flex;align-items:center;gap:20px 24px;width:100%;min-width:0}
+.catalog-search-row .search-form{flex:1;max-width:720px;min-width:0;min-height:54px;box-shadow:3px 3px #000}
+.catalog-search-row .sort-control{white-space:nowrap}
+@media(max-width:760px){.header-grid-catalog .header-actions{grid-column:1}.catalog-search-row{flex-wrap:wrap}.catalog-search-row .search-form{flex-basis:100%;max-width:none}}
 @media(max-width:760px){.catalog-controls{gap:18px;scroll-margin-top:24px}.catalog-controls .category-list{flex-basis:100%}}
 
 .order-coupon .payment-coupon-form{margin:0}.order-coupon .coupon-input{max-width:680px}.order-coupon .applied-coupon{margin-bottom:0}
